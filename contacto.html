@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ganchos Blistero · Contacto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+</head>
+<body>
+  <div id="loaderOverlay" class="loader-overlay">
+    <div class="loader-box">
+      <div class="loader-lid"></div>
+      <div class="loader-logo">
+        <img class="loader-img" src="img/logo/logo%20(2).jpg" alt="Logo Ganchos Blistero">
+      </div>
+      <div class="loader-spinner"></div>
+    </div>
+  </div>
+  <div class="promo-bar">
+    <div class="promo-bar__dot"></div>
+    <div class="promo-bar__ticker">
+      <span>Pagos seguros · Mercado Pago</span>
+      <span>Envíos 24/48h</span>
+      <span>+200 reseñas · Mercado Líder Platinum</span>
+      <span>Carrito rápido y checkout en 1 click</span>
+      <span>Stock real en línea</span>
+    </div>
+  </div>
+  <header class="nav">
+    <div class="nav__inner">
+      <div class="brand">
+        <img class="logo-img" src="img/logo/logo%20(2).jpg" alt="Logo Ganchos Blistero">
+        <div>
+          <div class="brand-title">Ganchos Blistero</div>
+        </div>
+      </div>
+      <nav class="nav__links">
+        <a href="index.html">Inicio</a>
+        <a href="index.html#opiniones">Opiniones</a>
+        <a href="catalogo.html">Catálogo</a>
+        <a href="contacto.html">Contacto</a>
+      </nav>
+      <button class="nav__toggle" aria-label="Abrir menú" id="navToggle">☰</button>
+      <div class="nav__cta">
+        <div class="pill">Respuesta en &lt;1h</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" id="contacto">
+      <div class="section__header">
+        <div>
+          <div class="section__eyebrow">Contacto</div>
+          <h1 class="section__title">Hablemos de tu operación</h1>
+          <p class="section__subtitle">Cotiza proyectos a medida, envíanos tus artes o agenda una demo de la tienda.</p>
+        </div>
+        <div class="pill" style="display:flex;align-items:center;gap:8px;">
+          <img class="logo-img" src="img/logo/logo%20(2).jpg" alt="Logo Ganchos Blistero" style="width:28px;height:28px;border-radius:8px;">
+          Soporte 24/7
+        </div>
+      </div>
+      <div class="contact">
+        <div class="contact__card">
+          <form id="contactForm">
+            <input type="text" name="nombre" placeholder="Nombre y apellido" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="tel" name="tel" placeholder="Teléfono / WhatsApp" required>
+            <textarea name="mensaje" placeholder="¿Qué necesitas?"></textarea>
+            <button type="submit">Enviar consulta</button>
+            <div class="badge">O escríbenos a ganchosblisterosc4@gmail.com</div>
+          </form>
+        </div>
+        <div class="contact__card">
+          <iframe src="https://www.google.com/maps?q=Posadas%203159%2C%20Villa%20Libertad%2C%20San%20Mart%C3%ADn&output=embed" allowfullscreen="" loading="lazy"></iframe>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="floating-cart">
+    <div class="floating-cart__icon">🛒</div>
+    <div>
+      <div class="floating-cart__label">Carrito</div>
+      <div class="floating-cart__count" id="cartCount">0</div>
+    </div>
+  </div>
+
+  <div class="drawer" id="cartDrawer">
+    <div class="drawer__overlay" onclick="toggleCart(false)"></div>
+    <div class="drawer__panel">
+      <div class="section__header" style="margin:0">
+        <div>
+          <div class="section__eyebrow">Mini-carrito</div>
+          <h3 class="section__title" style="font-size:24px;margin:6px 0 0;">Resumen de compra</h3>
+        </div>
+        <button class="ghost-btn" onclick="toggleCart(false)">Cerrar</button>
+      </div>
+      <div class="badge" style="margin-top:-6px;">Paso 1/2 · Revisa tu pedido antes de pagar</div>
+      <div class="cart-list" id="cartList"></div>
+      <div class="totals">
+        <div class="totals__row"><span>Subtotal</span><strong id="subtotalText">$0</strong></div>
+        <div class="totals__row"><span>Envío estimado</span><strong id="shippingText">$0</strong></div>
+        <div class="totals__row totals__row--highlight"><span>Total</span><strong id="totalText">$0</strong></div>
+        <button id="finalizeBtn">Finalizar compra</button>
+        <div class="badge">Configura `createPreference` en tu backend de Mercado Pago.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mega-footer">
+    <div class="mega-footer__grid">
+      <div>
+        <div class="mega-footer__title">Categorías</div>
+        <div class="mega-footer__list">
+          <a href="catalogo.html">Tienda</a>
+          <a href="contacto.html">Contacto</a>
+          <a href="catalogo.html">Venta mayorista</a>
+          <a href="#catalogo">Cambios y devoluciones</a>
+          <a href="#catalogo">Términos y condiciones</a>
+          <a href="#catalogo">Políticas de privacidad</a>
+        </div>
+      </div>
+      <div>
+        <div class="mega-footer__title">Contáctanos</div>
+        <div class="mega-footer__list">
+          <span>+54 11 3656 0587</span>
+          <span>ventas@ganchosblistero.com</span>
+          <span>Posadas 3159, Villa Libertad, San Martín</span>
+        </div>
+      </div>
+      <div>
+        <div class="mega-footer__title">Newsletter</div>
+        <form class="newsletter">
+          <input type="email" placeholder="Ingresá tu email">
+          <button type="submit">Enviar</button>
+        </form>
+      </div>
+    </div>
+    <div class="payments">
+      <div class="payments__row">
+        <div>
+          <strong>Medios de pago</strong>
+          <div class="payments__chips">
+            <span class="pay-chip">Visa</span>
+            <span class="pay-chip">Mastercard</span>
+            <span class="pay-chip">Amex</span>
+            <span class="pay-chip">Cabal</span>
+            <span class="pay-chip">Naranja</span>
+            <span class="pay-chip">Maestro</span>
+            <span class="pay-chip">PagoFácil</span>
+            <span class="pay-chip">Rapipago</span>
+            <span class="pay-chip">Transferencia</span>
+            <span class="pay-chip">QR Mercado Pago</span>
+          </div>
+        </div>
+        <div class="payments__chips">
+          <a class="social-btn" href="https://www.instagram.com/ganchosblisteros/" target="_blank" rel="noopener">📸 Instagram</a>
+          <a class="social-btn social-btn--ml" href="https://articulo.mercadolibre.com.ar/MLA-1527046396-200-ganchos-blisteros-para-panel-ranurado-12-o-8-cm-blanco-_JM?pdp_filters=seller_id%3A264146233#seller-info" target="_blank" rel="noopener">🛒 Mercado Libre</a>
+        </div>
+      </div>
+      <div class="payments__row" style="border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
+        <div class="footer__brand">
+          <img class="logo-img" src="img/logo/logo%20(2).jpg" alt="Logo Ganchos Blistero">
+          <div>
+            <div class="brand-title" style="color:#fff;">Ganchos Blistero</div>
+            <div class="footer__pill">Fijaciones premium</div>
+          </div>
+        </div>
+        <div>© 2025 Ganchos Blistero · desarrollado por Touce</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

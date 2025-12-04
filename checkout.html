@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ganchos Blistero · Checkout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+</head>
+<body>
+  <div id="loaderOverlay" class="loader-overlay">
+    <div class="loader-box">
+      <div class="loader-lid"></div>
+      <div class="loader-logo">
+        <img class="loader-img" src="img/logo/logo%20(2).jpg" alt="Logo Ganchos Blistero">
+      </div>
+      <div class="loader-spinner"></div>
+    </div>
+  </div>
+  <div class="promo-bar">
+    <div class="promo-bar__dot"></div>
+    <div class="promo-bar__ticker">
+      <span>Pagos seguros · Mercado Pago</span>
+      <span>Envíos 24/48h</span>
+      <span>+200 reseñas · Mercado Líder Platinum</span>
+      <span>Carrito rápido y checkout en 1 click</span>
+      <span>Stock real en línea</span>
+    </div>
+  </div>
+  <header class="nav">
+    <div class="nav__inner">
+      <div class="brand">
+        <img class="logo-img" src="img/logo/logo%20(2).jpg" alt="Logo Ganchos Blistero">
+        <div>
+          <div class="brand-title">Ganchos Blistero</div>
+        </div>
+      </div>
+      <nav class="nav__links">
+        <a href="index.html">Inicio</a>
+        <a href="index.html#opiniones">Opiniones</a>
+        <a href="catalogo.html">Catálogo</a>
+        <a href="contacto.html">Contacto</a>
+      </nav>
+      <button class="nav__toggle" aria-label="Abrir menú" id="navToggle">☰</button>
+      <div class="nav__cta">
+        <div class="pill">Soporte 24/7</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="section__header reveal" style="align-items:flex-start;">
+      <div>
+        <div class="section__eyebrow">Checkout</div>
+        <h1 class="section__title">Confirmá tu pedido</h1>
+        <p class="section__subtitle">Revisa cantidades, datos y finaliza el pago.</p>
+        <div class="stepper">
+          <div class="stepper__step stepper__step--active" data-step="1">1. Carrito</div>
+          <div class="stepper__step" data-step="2">2. Datos</div>
+          <div class="stepper__step" data-step="3">3. Pago</div>
+        </div>
+      </div>
+      <div class="ghost-btn ghost-btn--lg" onclick="location.href='catalogo.html'">Volver al catálogo</div>
+    </div>
+
+    <div class="checkout-grid reveal">
+      <div class="checkout-box" id="boxForm">
+        <div class="section__eyebrow">Carrito</div>
+        <div class="checkout-summary" id="checkoutSummary"></div>
+        <div class="section__eyebrow">Datos y entrega</div>
+        <div class="checkout-form">
+          <div class="step-block step-2">
+            <div><label for="nombre">Nombre y apellido</label><input id="nombre" type="text" placeholder="Nombre completo"></div>
+            <div><label for="tel">Teléfono</label><input id="tel" type="tel" placeholder="+54 11 1234 5678"></div>
+            <div><label for="email">E-mail</label><input id="email" type="email" placeholder="ejemplo@mail.com"></div>
+          </div>
+          <div class="step-block step-3" style="display:none;">
+            <label class="pickup-row">
+              <input type="checkbox" id="pickupToggle">
+              <div>
+                <strong>Retirar en el local</strong>
+                <div class="pickup-note">Posadas 3159, Villa Libertad, San Martín · Lunes a viernes 9 a 18h</div>
+              </div>
+            </label>
+            <div><label for="calle">Calle</label><input id="calle" type="text" placeholder="Av. Siempre Viva"></div>
+            <div><label for="numero">Número</label><input id="numero" type="text" placeholder="742"></div>
+            <div><label for="piso">Piso / Depto (opcional)</label><input id="piso" type="text" placeholder="Piso 3 Dpto B"></div>
+            <div><label for="ciudad">Ciudad</label><input id="ciudad" type="text" placeholder="Ciudad"></div>
+            <div><label for="provincia">Provincia</label><input id="provincia" type="text" placeholder="Provincia"></div>
+            <div><label for="pais">País</label><select id="pais"><option>Argentina</option><option>Uruguay</option><option>Chile</option></select></div>
+            <div><label for="cp">Código Postal</label><input id="cp" type="text" placeholder="Ingresa tu CP"></div>
+          </div>
+        </div>
+        <div class="checkout-actions">
+          <button class="ghost-btn" onclick="location.href='catalogo.html'">Volver</button>
+          <button class="pay-btn" id="continueBtn" type="button">Continuar</button>
+        </div>
+      </div>
+      <div class="checkout-box">
+        <div id="checkoutTotals" class="totals" style="border-top:none;padding-top:0;"></div>
+        <button id="checkoutPageBtn" class="pay-btn pay-btn--hidden">Enviar pedido</button>
+                <div class="trust-row" style="margin-top:10px;">
+          <div class="trust-badge">⚡ Envíos 24/48h</div>
+          <div class="trust-badge">↩️ Devoluciones ágiles</div>
+          <div class="trust-badge">🛠 Fabricación propia</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mega-footer">
+    <div class="mega-footer__grid">
+      <div>
+        <div class="mega-footer__title">Categorías</div>
+        <div class="mega-footer__list">
+          <a href="catalogo.html">Tienda</a>
+          <a href="contacto.html">Contacto</a>
+          <a href="catalogo.html">Venta mayorista</a>
+          <a href="#catalogo">Cambios y devoluciones</a>
+          <a href="#catalogo">Términos y condiciones</a>
+          <a href="#catalogo">Políticas de privacidad</a>
+        </div>
+      </div>
+      <div>
+        <div class="mega-footer__title">Contáctanos</div>
+        <div class="mega-footer__list">
+          <span>+54 11 3656 0587</span>
+          <span>ventas@ganchosblistero.com</span>
+          <span>Posadas 3159, Villa Libertad, San Martín</span>
+        </div>
+      </div>
+      <div>
+        <div class="mega-footer__title">Newsletter</div>
+        <form class="newsletter">
+          <input type="email" placeholder="Ingresá tu email">
+          <button type="submit">Enviar</button>
+        </form>
+      </div>
+    </div>
+    <div class="payments">
+      <div class="payments__row">
+        <div>
+          <strong>Medios de pago</strong>
+          <div class="payments__chips">
+            <span class="pay-chip">Visa</span>
+            <span class="pay-chip">Mastercard</span>
+            <span class="pay-chip">Amex</span>
+            <span class="pay-chip">Cabal</span>
+            <span class="pay-chip">Naranja</span>
+            <span class="pay-chip">Maestro</span>
+            <span class="pay-chip">PagoFácil</span>
+            <span class="pay-chip">Rapipago</span>
+            <span class="pay-chip">Transferencia</span>
+            <span class="pay-chip">QR Mercado Pago</span>
+          </div>
+        </div>
+        <div class="payments__chips">
+          <a class="social-btn" href="https://www.instagram.com/ganchosblisteros/" target="_blank" rel="noopener">📸 Instagram</a>
+          <a class="social-btn social-btn--ml" href="https://articulo.mercadolibre.com.ar/MLA-1527046396-200-ganchos-blisteros-para-panel-ranurado-12-o-8-cm-blanco-_JM?pdp_filters=seller_id%3A264146233#seller-info" target="_blank" rel="noopener">🛒 Mercado Libre</a>
+        </div>
+      </div>
+      <div class="payments__row" style="border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
+        <div class="footer__brand">
+          <img class="logo-img" src="img/logo/logo%20(2).jpg" alt="Logo Ganchos Blistero">
+          <div>
+            <div class="brand-title" style="color:#fff;">Ganchos Blistero</div>
+            <div class="footer__pill">Fijaciones premium</div>
+          </div>
+        </div>
+        <div>© 2025 Ganchos Blistero · desarrollado por Touce</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

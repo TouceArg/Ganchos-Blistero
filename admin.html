@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel · Ganchos Blistero</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { background:#0f1115; color:#f7f7f7; font-family:"Space Grotesk", system-ui, -apple-system, sans-serif; }
+    .admin-shell { max-width: 1180px; margin: 24px auto; padding: 0 16px; }
+    .panel-card { background:#161922; border:1px solid rgba(255,255,255,0.06); border-radius:16px; padding:20px; box-shadow:0 15px 40px rgba(0,0,0,0.35); }
+    .panel-card h1 { margin:0 0 8px; font-size:26px; }
+    .panel-card p { margin:0 0 16px; color:#aeb3c2; }
+    .field-row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+    .field-row input, .field-row select { background:#0c0f14; border:1px solid rgba(255,255,255,0.08); color:#f7f7f7; padding:10px 12px; border-radius:10px; min-width:180px; }
+    .btn { background:#ef2b2d; color:#fff; border:none; border-radius:12px; padding:10px 16px; cursor:pointer; font-weight:600; transition:transform 0.1s ease, box-shadow 0.1s ease; }
+    .btn:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(239,43,45,0.35); }
+    .btn--ghost { background:transparent; border:1px solid rgba(255,255,255,0.12); }
+    .status-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:12px; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; }
+    .status--pending { background:rgba(255,197,82,0.18); color:#f7b731; }
+    .status--approved { background:rgba(76,217,100,0.18); color:#3bd16f; }
+    .status--cancelled { background:rgba(255,99,99,0.18); color:#ff6b6b; }
+    table { width:100%; border-collapse:collapse; margin-top:12px; }
+    th, td { padding:10px; border-bottom:1px solid rgba(255,255,255,0.06); text-align:left; vertical-align:top; }
+    th { color:#9fa6b9; font-size:12px; text-transform:uppercase; letter-spacing:0.6px; }
+    .pill { background:rgba(255,255,255,0.08); padding:4px 8px; border-radius:10px; font-size:12px; }
+    .notes { font-size:12px; color:#cdd2e0; }
+    .hidden { display:none; }
+    .charts { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px; margin-top:16px; }
+    .chart-box { background:#0c0f14; border:1px solid rgba(255,255,255,0.05); border-radius:14px; padding:12px; }
+    .chart-box h3 { margin:0 0 8px; font-size:14px; color:#cfd4e5; letter-spacing:0.3px; }
+    @media (max-width: 720px) {
+      .panel-card { padding:16px; }
+      table, thead, tbody, th, td, tr { display:block; }
+      th { display:none; }
+      td { border-bottom:1px solid rgba(255,255,255,0.05); padding:8px 0; }
+      .table-wrap { overflow:hidden; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-shell">
+    <div class="panel-card">
+      <h1>Panel de pedidos</h1>
+      <p>Ingresa el token admin para ver y actualizar pedidos.</p>
+      <div id="loginBlock">
+        <div class="field-row">
+          <input type="password" id="tokenInput" placeholder="Token admin">
+          <button class="btn" id="loginBtn">Ingresar</button>
+        </div>
+      </div>
+      <div id="panelBlock" class="hidden">
+        <div class="field-row">
+          <input type="text" id="searchInput" placeholder="Buscar por email u orden">
+          <select id="statusFilter">
+            <option value="">Todos los estados</option>
+            <option value="pending">Pendiente</option>
+            <option value="approved">Cerrado</option>
+            <option value="cancelled">Cancelado</option>
+          </select>
+          <button class="btn btn--ghost" id="refreshBtn">Refrescar</button>
+          <span class="pill" id="summaryCount">0 pedidos</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Orden</th>
+                <th>Cliente</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Items</th>
+                <th>Notas</th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+        </div>
+        <div class="charts">
+          <div class="chart-box">
+            <h3>Pedidos por estado</h3>
+            <canvas id="statusChart" height="180"></canvas>
+          </div>
+          <div class="chart-box">
+            <h3>Total diario</h3>
+            <canvas id="dailyChart" height="180"></canvas>
+          </div>
+          <div class="chart-box">
+            <h3>Productos más elegidos</h3>
+            <canvas id="topItemsChart" height="180"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
