@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:3002/api";
+const API_BASE = "https://ganchos-blistero-production.up.railway.app/api";
 const loginBlock = document.getElementById("loginBlock");
 const panelBlock = document.getElementById("panelBlock");
 const tokenInput = document.getElementById("tokenInput");
