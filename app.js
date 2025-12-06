@@ -1,4 +1,4 @@
-// Catálogo inicial local. Será reemplazado por datos desde la API/Sheet.
+ï»¿// CatÃƒÂ¡logo inicial local. SerÃƒÂ¡ reemplazado por datos desde la API/Sheet.
 let products = [
   {
     id: "hook-pro",
@@ -6,7 +6,7 @@ let products = [
     price: 5900,
     size: "12 cm",
     badge: "Top seller",
-    description: "Gancho blistero galvanizado para retail y exhibidores de alto tráfico.",
+    description: "Gancho blistero galvanizado para retail y exhibidores de alto trÃƒÂ¡fico.",
     imageLabel: "PRO",
     colors: [
       { name: "Negro", hex: "#121212" },
@@ -20,7 +20,7 @@ let products = [
     name: "Hook Heavy Duty",
     price: 7900,
     size: "12 cm",
-    badge: "Nueva línea",
+    badge: "Nueva lÃƒÂ­nea",
     description: "Acero reforzado con punta de seguridad. Ideal para cargas pesadas.",
     imageLabel: "HD",
     colors: [
@@ -55,7 +55,7 @@ let products = [
       { name: "Negro", hex: "#121212" },
       { name: "Rojo", hex: "#ef2b2d" }
     ],
-    images: ["Pack completo", "Detalle blister", "Aplicación en góndola"]
+    images: ["Pack completo", "Detalle blister", "AplicaciÃƒÂ³n en gÃƒÂ³ndola"]
   },
   {
     id: "display-led",
@@ -63,13 +63,13 @@ let products = [
     price: 45900,
     size: "8 cm",
     badge: "Premium",
-    description: "Rack con iluminación integrada y passthrough de cables oculto.",
+    description: "Rack con iluminaciÃƒÂ³n integrada y passthrough de cables oculto.",
     imageLabel: "LED",
     colors: [
       { name: "Negro", hex: "#0e0e12" },
       { name: "Blanco", hex: "#f7f7f9" }
     ],
-    images: ["Vista frontal", "Back panel", "Detalle iluminación"]
+    images: ["Vista frontal", "Back panel", "Detalle iluminaciÃƒÂ³n"]
   },
   {
     id: "gancho-mini",
@@ -88,12 +88,12 @@ let products = [
   }
 ];
 let combos = [
-  { id: "combo-8-50", name: "Combo 50 ganchos 8cm", price: 180000, size: "8 cm", badge: "Combo", description: "Pack de 50 ganchos blistero de 8cm listo para PDV.", imageLabel: "50x 8cm", colors: [{ name: "Negro", hex: "#111" }, { name: "Rojo", hex: "#e03232" }], images: ["Combo 50", "Detalle color", "Aplicación"] },
-  { id: "combo-8-100", name: "Combo 100 ganchos 8cm", price: 340000, size: "8 cm", badge: "Combo", description: "Pack de 100 ganchos blistero de 8cm con ahorro extra.", imageLabel: "100x 8cm", colors: [{ name: "Negro", hex: "#111" }, { name: "Rojo", hex: "#e03232" }], images: ["Combo 100", "Detalle color", "Aplicación"] },
-  { id: "combo-8-200", name: "Combo 200 ganchos 8cm", price: 650000, size: "8 cm", badge: "Combo", description: "Pack de 200 ganchos blistero de 8cm para grandes volúmenes.", imageLabel: "200x 8cm", colors: [{ name: "Negro", hex: "#111" }, { name: "Rojo", hex: "#e03232" }], images: ["Combo 200", "Detalle color", "Aplicación"] },
-  { id: "combo-12-50", name: "Combo 50 ganchos 12cm", price: 210000, size: "12 cm", badge: "Combo", description: "Pack de 50 ganchos blistero de 12cm para reposición rápida.", imageLabel: "50x 12cm", colors: [{ name: "Negro", hex: "#121212" }, { name: "Rojo", hex: "#ef2b2d" }], images: ["Combo 50", "Detalle color", "Aplicación"] },
-  { id: "combo-12-100", name: "Combo 100 ganchos 12cm", price: 380000, size: "12 cm", badge: "Combo", description: "Pack de 100 ganchos blistero de 12cm con mejor precio por unidad.", imageLabel: "100x 12cm", colors: [{ name: "Negro", hex: "#121212" }, { name: "Rojo", hex: "#ef2b2d" }], images: ["Combo 100", "Detalle color", "Aplicación"] },
-  { id: "combo-12-200", name: "Combo 200 ganchos 12cm", price: 720000, size: "12 cm", badge: "Combo", description: "Pack de 200 ganchos blistero de 12cm para proyectos grandes.", imageLabel: "200x 12cm", colors: [{ name: "Negro", hex: "#121212" }, { name: "Rojo", hex: "#ef2b2d" }], images: ["Combo 200", "Detalle color", "Aplicación"] }
+  { id: "combo-8-50", name: "Combo 50 ganchos 8cm", price: 180000, size: "8 cm", badge: "Combo", description: "Pack de 50 ganchos blistero de 8cm listo para PDV.", imageLabel: "50x 8cm", colors: [{ name: "Negro", hex: "#111" }, { name: "Rojo", hex: "#e03232" }], images: ["Combo 50", "Detalle color", "AplicaciÃƒÂ³n"] },
+  { id: "combo-8-100", name: "Combo 100 ganchos 8cm", price: 340000, size: "8 cm", badge: "Combo", description: "Pack de 100 ganchos blistero de 8cm con ahorro extra.", imageLabel: "100x 8cm", colors: [{ name: "Negro", hex: "#111" }, { name: "Rojo", hex: "#e03232" }], images: ["Combo 100", "Detalle color", "AplicaciÃƒÂ³n"] },
+  { id: "combo-8-200", name: "Combo 200 ganchos 8cm", price: 650000, size: "8 cm", badge: "Combo", description: "Pack de 200 ganchos blistero de 8cm para grandes volÃƒÂºmenes.", imageLabel: "200x 8cm", colors: [{ name: "Negro", hex: "#111" }, { name: "Rojo", hex: "#e03232" }], images: ["Combo 200", "Detalle color", "AplicaciÃƒÂ³n"] },
+  { id: "combo-12-50", name: "Combo 50 ganchos 12cm", price: 210000, size: "12 cm", badge: "Combo", description: "Pack de 50 ganchos blistero de 12cm para reposiciÃƒÂ³n rÃƒÂ¡pida.", imageLabel: "50x 12cm", colors: [{ name: "Negro", hex: "#121212" }, { name: "Rojo", hex: "#ef2b2d" }], images: ["Combo 50", "Detalle color", "AplicaciÃƒÂ³n"] },
+  { id: "combo-12-100", name: "Combo 100 ganchos 12cm", price: 380000, size: "12 cm", badge: "Combo", description: "Pack de 100 ganchos blistero de 12cm con mejor precio por unidad.", imageLabel: "100x 12cm", colors: [{ name: "Negro", hex: "#121212" }, { name: "Rojo", hex: "#ef2b2d" }], images: ["Combo 100", "Detalle color", "AplicaciÃƒÂ³n"] },
+  { id: "combo-12-200", name: "Combo 200 ganchos 12cm", price: 720000, size: "12 cm", badge: "Combo", description: "Pack de 200 ganchos blistero de 12cm para proyectos grandes.", imageLabel: "200x 12cm", colors: [{ name: "Negro", hex: "#121212" }, { name: "Rojo", hex: "#ef2b2d" }], images: ["Combo 200", "Detalle color", "AplicaciÃƒÂ³n"] }
 ];
 
 const cart = JSON.parse(localStorage.getItem("gb-cart") || "{}");
@@ -296,7 +296,7 @@ function renderCart() {
   const items = Object.values(cart);
   cartCount.textContent = items.reduce((acc, item) => acc + item.qty, 0);
   if (!items.length) {
-    cartList.innerHTML = '<div class="empty">Todavía no agregaste productos.</div>';
+    cartList.innerHTML = '<div class="empty">TodavÃƒÂ­a no agregaste productos.</div>';
     subtotalText.textContent = "$0";
     shippingText.textContent = "$0";
     totalText.textContent = "$0";
@@ -344,13 +344,13 @@ function renderCheckoutSummary() {
   if (!checkoutSummary || !checkoutTotals) return;
   const items = Object.values(cart);
   if (!items.length) {
-    checkoutSummary.innerHTML = '<div class="empty">El carrito está vacío.</div>';
+    checkoutSummary.innerHTML = '<div class="empty">El carrito estÃƒÂ¡ vacÃƒÂ­o.</div>';
     checkoutTotals.innerHTML = "";
     return;
   }
   checkoutSummary.innerHTML = items.map(i => `
     <div class="checkout-summary__item">
-      <span>${i.name} × ${i.qty}</span>
+      <span>${i.name} Ãƒâ€” ${i.qty}</span>
       <div class="checkout-summary__actions">
         <button class="qty-btn" data-qty="${i.id}" data-delta="-1">-</button>
         <span style="margin:0 8px;">${i.qty}</span>
@@ -363,7 +363,7 @@ function renderCheckoutSummary() {
   const shipping = getShipping(subtotal);
   checkoutTotals.innerHTML = `
     <div class="totals__row"><span>Subtotal</span><strong>${formatCurrency(subtotal)}</strong></div>
-    <div class="totals__row"><span>Envío</span><strong>${shipping === 0 ? "Gratis" : formatCurrency(shipping)}</strong></div>
+    <div class="totals__row"><span>EnvÃƒÂ­o</span><strong>${shipping === 0 ? "Gratis" : formatCurrency(shipping)}</strong></div>
     <div class="totals__row totals__row--highlight"><span>Total</span><strong>${formatCurrency(subtotal + shipping)}</strong></div>
   `;
   checkoutSummary.querySelectorAll("[data-qty]").forEach(btn => {
@@ -500,34 +500,36 @@ function closeProductModal() {
   productModal.classList.remove("modal--open");
 }
 
-async function createPreference(items) {`n  return null;`n}
+async function createPreference(items) {
+  return null;
+}
 
 async function handleCheckout() {
   if (!isCheckoutReady()) {
-    alert("Completa email y c�digo postal antes de enviar.");
+    alert('Completa email y codigo postal antes de enviar.');
     return;
   }
   const items = Object.values(cart);
   if (!items.length) {
-    alert("Agrega productos al carrito antes de enviar.");
+    alert('Agrega productos al carrito antes de enviar.');
     return;
   }
   const subtotal = items.reduce((acc, i) => acc + i.qty * i.price, 0);
   const shipping = getShipping(subtotal);
   const payload = {
-    name: nombreInput?.value || "Checkout web",
-    email: emailInput?.value || "",
-    phone: telInput?.value || "",
+    name: nombreInput?.value || 'Checkout web',
+    email: emailInput?.value || '',
+    phone: telInput?.value || '',
     total: subtotal + shipping,
-    cp: cpInput?.value || "",
-    pais: paisSelect?.value || "",
+    cp: cpInput?.value || '',
+    pais: paisSelect?.value || '',
     address: {
-      street: `${calleInput?.value || ""} ${numeroInput?.value || ""}`.trim(),
-      floor: pisoInput?.value || "",
-      city: ciudadInput?.value || "",
-      state: provinciaInput?.value || "",
-      country: paisSelect?.value || "",
-      zip: cpInput?.value || "",
+      street: ${calleInput?.value || ''} .trim(),
+      floor: pisoInput?.value || '',
+      city: ciudadInput?.value || '',
+      state: provinciaInput?.value || '',
+      country: paisSelect?.value || '',
+      zip: cpInput?.value || '',
     },
     pickup: pickupToggle?.checked || false,
     items: items.map((i) => ({
@@ -536,26 +538,26 @@ async function handleCheckout() {
       unit_price: i.price,
       size: i.size,
     })),
-    notes: pickupToggle?.checked ? "Retiro en local" : "Pedido web pendiente de confirmaci�n",
+    notes: pickupToggle?.checked ? 'Retiro en local' : 'Pedido web pendiente de confirmacion',
   };
   try {
     showLoader();
     const res = await fetch(ORDER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error();
     const data = await res.json();
     const payRes = await fetch(PAY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         order_id: data.order_id,
-        email: emailInput?.value || "",
+        email: emailInput?.value || '',
         total: subtotal + shipping,
         items: [
-          { title: `Pedido ${data.order_id}`, quantity: 1, unit_price: subtotal + shipping },
+          { title: Pedido , quantity: 1, unit_price: subtotal + shipping },
         ],
       }),
     });
@@ -565,17 +567,19 @@ async function handleCheckout() {
       window.location.href = payData.init_point;
       return;
     }
-    alert(`Pedido enviado. ID: ${data.order_id || "pendiente"}`);
+    alert(Pedido enviado. ID: );
     Object.keys(cart).forEach((k) => delete cart[k]);
     persistCart();
     renderCart();
     renderCheckoutSummary();
   } catch (err) {
-    alert("No se pudo enviar el pedido o crear el pago. Reintenta o cont�ctanos.");
+    alert('No se pudo enviar el pedido o crear el pago. Reintenta o contactanos.');
   } finally {
     hideLoader();
   }
-}document.addEventListener("DOMContentLoaded", () => {
+}
+
+document.addEventListener("DOMContentLoaded", () => {
   // muestra skeletons de entrada
   renderCatalog();
   renderFeatured();
@@ -603,7 +607,7 @@ async function handleCheckout() {
       }
       if (currentStep === 2) {
         if (!isCheckoutReady()) {
-          alert("Completa nombre, teléfono y email antes de continuar.");
+          alert("Completa nombre, telÃƒÂ©fono y email antes de continuar.");
           return;
         }
         goToStep(3);
@@ -625,7 +629,7 @@ async function handleCheckout() {
           alert("Gracias por tu mensaje. Te responderemos en minutos.");
           contactForm.reset();
         }).catch(() => {
-          alert("No se pudo enviar. Reintenta o escríbenos a ventas@ganchosblistero.com");
+          alert("No se pudo enviar. Reintenta o escrÃƒÂ­benos a ventas@ganchosblistero.com");
         });
     });
   }
@@ -687,7 +691,7 @@ async function fetchCatalog() {
     combos = data.filter(d => d.type === "combo");
     isLoadingCatalog = false;
   } catch (error) {
-    console.warn("No se pudo obtener el catálogo remoto, se usan datos locales.", error);
+    console.warn("No se pudo obtener el catÃƒÂ¡logo remoto, se usan datos locales.", error);
   } finally {
     isLoadingCatalog = false;
     renderCatalog();
@@ -723,4 +727,6 @@ function hideLoader() {
   if (!loaderOverlay) return;
   loaderOverlay.classList.remove("is-visible");
 }
+
+
 
