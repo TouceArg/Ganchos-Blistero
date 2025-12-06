@@ -369,6 +369,43 @@ button:active { transform: translateY(0); }
   font-size: 13px;
   box-shadow: 0 6px 12px rgba(18,18,24,0.06);
 }
+
+.trust-logos {
+  padding: 16px 20px;
+  background: linear-gradient(90deg,#fff 0%,#f7f8fc 100%);
+  border: 1px solid #eceff7;
+  border-radius: 16px;
+  margin: 0 16px 24px;
+}
+.trust-logos__track {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+  gap: 10px;
+  align-items: center;
+}
+
+.pay-safe {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f5f9ff;
+  border: 1px solid #e1e8f5;
+  margin-top: 14px;
+}
+.pay-safe__icon {
+  font-size: 18px;
+}
+.pay-safe__title {
+  font-weight: 600;
+  color: #0f172a;
+}
+.pay-safe__subtitle {
+  font-size: 13px;
+  color: #6b7280;
+}
 .ghost-btn {
   border-radius: 999px;
   border: 1px solid var(--stroke);
@@ -701,13 +738,38 @@ button:active { transform: translateY(0); }
   align-items: stretch;
 }
 .contact__card {
-  background: #fff;
-  border: 1px solid var(--stroke);
-  border-radius: 18px;
-  padding: 18px;
-  display: grid;
-  gap: 14px;
-  box-shadow: var(--shadow);
+    background: #fff;
+    border: 1px solid var(--stroke);
+    border-radius: 18px;
+    padding: 18px;
+    display: grid;
+    gap: 14px;
+    box-shadow: var(--shadow);
+  }
+
+.contact-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin: 14px 0 18px;
+}
+.contact-stat {
+    background: linear-gradient(135deg, #fff7f7, #fff);
+    border: 1px solid #f0dede;
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 10px 24px rgba(239,43,45,0.08);
+}
+.contact-stat__number {
+    font-size: 24px;
+    font-weight: 800;
+    color: #d82027;
+    line-height: 1.2;
+}
+.contact-stat__label {
+    font-size: 13px;
+    color: #4a4e57;
+    margin-top: 4px;
 }
 .contact form {
   display: grid;
@@ -1217,28 +1279,47 @@ iframe {
   gap: 10px;
 }
 .social-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid #d7d9e0;
-  background: #ffffff;
-  color: #0d0d16;
-  font-weight: 700;
-  box-shadow: 0 6px 14px rgba(18,18,24,0.08);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    background: #13141a;
+    color: #f5f5f7;
+    font-weight: 700;
+    box-shadow: none;
+    transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
 }
 .social-btn--ml {
-  background: #ffd600;
-  color: #0d0d16;
-  border: 1px solid #e9c800;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+    background: #ffd600;
+    color: #0d0d16;
+    border: 1px solid #e4c300;
+    box-shadow: none;
 }
 .social-btn--ig {
-  background: linear-gradient(135deg, #ff7a7a, #b14cff);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.18);
-  box-shadow: 0 6px 14px rgba(177, 76, 255, 0.25);
+    background: #1c1d24;
+    color: #f5f5f7;
+    border: 1px solid #2f313a;
+}
+.social-btn--ig:hover {
+    background: #22232c;
+}
+.social-btn:hover {
+    border-color: #40424d;
+    box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+    transform: translateY(-2px);
+}
+
+/* Social icons with inline SVG backgrounds */
+.social-btn--ig {
+    background: #22232c url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%23f5f5f7\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"5\" ry=\"5\"></rect><path d=\"M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z\"></path><line x1=\"17.5\" y1=\"6.5\" x2=\"17.5\" y2=\"6.5\"></line></svg>') center center no-repeat;
+    background-size: 22px;
+}
+.social-btn--ml {
+    background: #ffd600 url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%230d0d16\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"9\" cy=\"21\" r=\"1\"></circle><circle cx=\"20\" cy=\"21\" r=\"1\"></circle><path d=\"M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61H19a2 2 0 0 0 2-1.61l1-6.39H6\"></path></svg>') center center no-repeat;
+    background-size: 22px;
 }
 .mega-footer {
   background: #0b0b0f;

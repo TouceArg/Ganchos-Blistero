@@ -64,6 +64,20 @@
           Soporte 24/7
         </div>
       </div>
+      <div class="contact-stats">
+        <div class="contact-stat">
+          <div class="contact-stat__number" data-target="10000">0</div>
+          <div class="contact-stat__label">+10.000 productos entregados</div>
+        </div>
+        <div class="contact-stat">
+          <div class="contact-stat__number" data-target="200">0</div>
+          <div class="contact-stat__label">+200 reseñas 5★</div>
+        </div>
+        <div class="contact-stat">
+          <div class="contact-stat__number" data-target="98">0</div>
+          <div class="contact-stat__label">98% envíos 24/48h</div>
+        </div>
+      </div>
       <div class="contact">
         <div class="contact__card">
           <form id="contactForm">
@@ -176,6 +190,38 @@
     </div>
   </footer>
 
+  <script>
+    (function() {
+      const counters = document.querySelectorAll(".contact-stat__number");
+      if (!counters.length) return;
+      const ease = t => 1 - Math.pow(1 - t, 3);
+      const animate = el => {
+        const target = Number(el.dataset.target || 0);
+        const duration = 1200;
+        const start = performance.now();
+        const step = now => {
+          const t = Math.min(1, (now - start) / duration);
+          const val = Math.floor(ease(t) * target);
+          el.textContent = val.toLocaleString("es-AR");
+          if (t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      };
+      if ("IntersectionObserver" in window) {
+        const obs = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              animate(entry.target);
+              obs.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.3 });
+        counters.forEach(el => obs.observe(el));
+      } else {
+        counters.forEach(animate);
+      }
+    })();
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
