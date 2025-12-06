@@ -132,6 +132,7 @@ const searchInput = document.getElementById("searchInput");
 const API_URL = "https://ganchos-blistero-production.up.railway.app/api/catalogo";
 const CONTACT_URL = "https://ganchos-blistero-production.up.railway.app/api/contacto";
 const ORDER_URL = "https://ganchos-blistero-production.up.railway.app/api/orders";
+const PAY_URL = "https://ganchos-blistero-production.up.railway.app/api/pago/create";
 const nombreInput = document.getElementById("nombre");
 const telInput = document.getElementById("tel");
 const calleInput = document.getElementById("calle");
@@ -499,15 +500,11 @@ function closeProductModal() {
   productModal.classList.remove("modal--open");
 }
 
-async function createPreference(items) {
-  // TODO: Reemplaza con tu endpoint backend que cree la preferencia de Mercado Pago
-  console.warn("Configura createPreference para devolver un preferenceId real de Mercado Pago.");
-  return "TEST-PREFERENCE-ID";
-}
+async function createPreference(items) {`n  return null;`n}
 
 async function handleCheckout() {
   if (!isCheckoutReady()) {
-    alert("Completa email y cÃ³digo postal antes de enviar.");
+    alert("Completa email y código postal antes de enviar.");
     return;
   }
   const items = Object.values(cart);
@@ -517,7 +514,7 @@ async function handleCheckout() {
   }
   const subtotal = items.reduce((acc, i) => acc + i.qty * i.price, 0);
   const shipping = getShipping(subtotal);
-const payload = {
+  const payload = {
     name: nombreInput?.value || "Checkout web",
     email: emailInput?.value || "",
     phone: telInput?.value || "",
@@ -539,7 +536,7 @@ const payload = {
       unit_price: i.price,
       size: i.size,
     })),
-    notes: pickupToggle?.checked ? "Retiro en local" : "Pedido web pendiente de confirmaciÃ³n",
+    notes: pickupToggle?.checked ? "Retiro en local" : "Pedido web pendiente de confirmación",
   };
   try {
     showLoader();
@@ -550,19 +547,35 @@ const payload = {
     });
     if (!res.ok) throw new Error();
     const data = await res.json();
+    const payRes = await fetch(PAY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        order_id: data.order_id,
+        email: emailInput?.value || "",
+        total: subtotal + shipping,
+        items: [
+          { title: `Pedido ${data.order_id}`, quantity: 1, unit_price: subtotal + shipping },
+        ],
+      }),
+    });
+    if (!payRes.ok) throw new Error();
+    const payData = await payRes.json();
+    if (payData.init_point) {
+      window.location.href = payData.init_point;
+      return;
+    }
     alert(`Pedido enviado. ID: ${data.order_id || "pendiente"}`);
     Object.keys(cart).forEach((k) => delete cart[k]);
     persistCart();
     renderCart();
     renderCheckoutSummary();
   } catch (err) {
-    alert("No se pudo enviar el pedido. Reintenta o contÃ¡ctanos.");
+    alert("No se pudo enviar el pedido o crear el pago. Reintenta o contáctanos.");
   } finally {
     hideLoader();
   }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
+}document.addEventListener("DOMContentLoaded", () => {
   // muestra skeletons de entrada
   renderCatalog();
   renderFeatured();
@@ -710,3 +723,4 @@ function hideLoader() {
   if (!loaderOverlay) return;
   loaderOverlay.classList.remove("is-visible");
 }
+
