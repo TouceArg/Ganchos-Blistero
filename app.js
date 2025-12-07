@@ -350,7 +350,7 @@ function renderCheckoutSummary() {
   }
   checkoutSummary.innerHTML = items.map(i => `
     <div class="checkout-summary__item">
-      <span>${i.name} ├ù ${i.qty}</span>
+      <div class="checkout-summary__title">${i.name}</div>
       <div class="checkout-summary__actions">
         <button class="qty-btn" data-qty="${i.id}" data-delta="-1">-</button>
         <span style="margin:0 8px;">${i.qty}</span>
@@ -727,6 +727,9 @@ function hideLoader() {
   if (!loaderOverlay) return;
   loaderOverlay.classList.remove("is-visible");
 }
+
+
+
 
 
 
