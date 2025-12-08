@@ -679,6 +679,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Collage slider
   const collageTrack = document.getElementById("collageTrack");
   const collageDots = document.getElementById("collageDots");
+  const collagePrev = document.getElementById("collagePrev");
+  const collageNext = document.getElementById("collageNext");
   if (collageTrack && collageDots) {
     const slides = Array.from(collageTrack.children);
     let current = 0;
@@ -690,6 +692,8 @@ document.addEventListener("DOMContentLoaded", () => {
       dots.forEach((d, i) => d.classList.toggle("is-active", i === current));
     };
     dots.forEach(d => d.addEventListener("click", () => goTo(Number(d.dataset.collage))));
+    if (collagePrev) collagePrev.addEventListener("click", () => goTo(current - 1));
+    if (collageNext) collageNext.addEventListener("click", () => goTo(current + 1));
     goTo(0);
     let timer = setInterval(() => goTo(current + 1), 4000);
     const stop = () => clearInterval(timer);
