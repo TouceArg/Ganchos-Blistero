@@ -690,11 +690,12 @@ document.addEventListener("DOMContentLoaded", () => {
       dots.forEach((d, i) => d.classList.toggle("is-active", i === current));
     };
     dots.forEach(d => d.addEventListener("click", () => goTo(Number(d.dataset.collage))));
+    goTo(0);
     let timer = setInterval(() => goTo(current + 1), 4000);
-    const resetTimer = () => { clearInterval(timer); timer = setInterval(() => goTo(current + 1), 4000); };
-    collageTrack.addEventListener("transitionend", resetTimer);
-    collageTrack.parentElement.addEventListener("mouseenter", () => clearInterval(timer));
-    collageTrack.parentElement.addEventListener("mouseleave", resetTimer);
+    const stop = () => clearInterval(timer);
+    const resume = () => { stop(); timer = setInterval(() => goTo(current + 1), 4000); };
+    collageTrack.parentElement.addEventListener("mouseenter", stop);
+    collageTrack.parentElement.addEventListener("mouseleave", resume);
   }
   goToStep(1);
   if (brandEl) {
