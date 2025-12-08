@@ -684,14 +684,24 @@ async function fetchCatalog() {
   renderCatalog();
   renderFeatured();
   renderCombos();
+  const sanitizeItem = (item) => {
+    if (!item || !item.id) return null;
+    const type = item.type === "combo" ? "combo" : "product";
+    const price = Number(item.price) || 0;
+    const size = item.size || "8 cm";
+    const description = item.description || "";
+    const colors = Array.isArray(item.colors) && item.colors.length ? item.colors : [{ name: "Negro", hex: "#111" }];
+    const images = Array.isArray(item.images) && item.images.length ? item.images : ["Producto"];
+    return { ...item, type, price, size, description, colors, images };
+  };
   try {
     const res = await fetch(API_URL);
     const data = await res.json();
-    products = data.filter(d => (d.type || "product") === "product");
-    combos = data.filter(d => d.type === "combo");
-    isLoadingCatalog = false;
+    const sanitized = (Array.isArray(data) ? data : []).map(sanitizeItem).filter(Boolean);
+    products = sanitized.filter(d => d.type === "product");
+    combos = sanitized.filter(d => d.type === "combo");
   } catch (error) {
-    console.warn("No se pudo obtener el cat├ílogo remoto, se usan datos locales.", error);
+    console.warn("No se pudo obtener el catálogo remoto, se usan datos locales.", error);
   } finally {
     isLoadingCatalog = false;
     renderCatalog();
