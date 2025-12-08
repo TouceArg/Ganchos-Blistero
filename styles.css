@@ -857,7 +857,7 @@ iframe {
   gap: 12px;
 }
 .collage {
-  padding: 40px 0;
+  padding: 32px 0 12px;
 }
 .collage__viewport {
   position: relative;
@@ -878,12 +878,20 @@ iframe {
   min-width: 100%;
   height: 320px;
   position: relative;
+  background: #f3f3f6;
 }
 .collage__item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+.collage__item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+  pointer-events: none;
 }
 .collage__dots {
   display: flex;
