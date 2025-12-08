@@ -676,6 +676,26 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     revealItems.forEach(el => el.classList.add("is-visible"));
   }
+  // Collage slider
+  const collageTrack = document.getElementById("collageTrack");
+  const collageDots = document.getElementById("collageDots");
+  if (collageTrack && collageDots) {
+    const slides = Array.from(collageTrack.children);
+    let current = 0;
+    collageDots.innerHTML = slides.map((_, idx) => `<span class="collage__dot ${idx === 0 ? "is-active" : ""}" data-collage="${idx}"></span>`).join("");
+    const dots = collageDots.querySelectorAll("[data-collage]");
+    const goTo = (idx) => {
+      current = (idx + slides.length) % slides.length;
+      collageTrack.style.transform = `translateX(-${current * 100}%)`;
+      dots.forEach((d, i) => d.classList.toggle("is-active", i === current));
+    };
+    dots.forEach(d => d.addEventListener("click", () => goTo(Number(d.dataset.collage))));
+    let timer = setInterval(() => goTo(current + 1), 4000);
+    const resetTimer = () => { clearInterval(timer); timer = setInterval(() => goTo(current + 1), 4000); };
+    collageTrack.addEventListener("transitionend", resetTimer);
+    collageTrack.parentElement.addEventListener("mouseenter", () => clearInterval(timer));
+    collageTrack.parentElement.addEventListener("mouseleave", resetTimer);
+  }
   goToStep(1);
   if (brandEl) {
     brandEl.style.cursor = "pointer";
