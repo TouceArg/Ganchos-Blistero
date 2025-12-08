@@ -271,7 +271,12 @@ function renderCombos() {
 function addToCart(id) {
   const product = products.find(p => p.id === id);
   if (!product) return;
-  cart[id] = cart[id] ? { ...cart[id], qty: cart[id].qty + 1 } : { ...product, qty: 1 };
+  const color = product.colors?.[modalColorIndex] || product.colors?.[0] || { name: "" };
+  const cartKey = color.name ? `${id}__${color.name}` : id;
+  const displayName = color.name ? `${product.name} (${color.name.toUpperCase()})` : product.name;
+  cart[cartKey] = cart[cartKey]
+    ? { ...cart[cartKey], qty: cart[cartKey].qty + 1 }
+    : { ...product, id: cartKey, baseId: product.id, colorName: color.name, name: displayName, qty: 1 };
   persistCart();
   renderCart();
   renderCheckoutSummary();
@@ -344,7 +349,7 @@ function renderCheckoutSummary() {
   if (!checkoutSummary || !checkoutTotals) return;
   const items = Object.values(cart);
   if (!items.length) {
-    checkoutSummary.innerHTML = '<div class="empty">El carrito est├í vac├¡o.</div>';
+    checkoutSummary.innerHTML = '<div class="empty">El carrito está vacío.</div>';
     checkoutTotals.innerHTML = "";
     return;
   }
@@ -363,7 +368,7 @@ function renderCheckoutSummary() {
   const shipping = getShipping(subtotal);
   checkoutTotals.innerHTML = `
     <div class="totals__row"><span>Subtotal</span><strong>${formatCurrency(subtotal)}</strong></div>
-    <div class="totals__row"><span>Env├¡o</span><strong>${shipping === 0 ? "Gratis" : formatCurrency(shipping)}</strong></div>
+    <div class="totals__row"><span>Envío</span><strong>${shipping === 0 ? "Gratis" : formatCurrency(shipping)}</strong></div>
     <div class="totals__row totals__row--highlight"><span>Total</span><strong>${formatCurrency(subtotal + shipping)}</strong></div>
   `;
   checkoutSummary.querySelectorAll("[data-qty]").forEach(btn => {
@@ -737,6 +742,7 @@ function hideLoader() {
   if (!loaderOverlay) return;
   loaderOverlay.classList.remove("is-visible");
 }
+
 
 
 
