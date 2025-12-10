@@ -99,6 +99,7 @@ let combos = [
 const cart = JSON.parse(localStorage.getItem("gb-cart") || "{}");
 let activeFilter = "all";
 let modalColorIndex = 0;
+let modalImageIndex = 0;
 let searchTerm = "";
 
 const catalogGrid = document.getElementById("catalogGrid");
@@ -456,12 +457,16 @@ function openProductModal(id) {
   const product = [...products, ...combos].find(p => p.id === id);
   if (!product) return;
   modalColorIndex = 0;
+  modalImageIndex = 0;
   renderProductModal(product);
   productModal.classList.add("modal--open");
 }
 
 function renderProductModal(product) {
   const color = product.colors[modalColorIndex] || product.colors[0];
+  const images = Array.isArray(product.images) && product.images.length ? product.images : [];
+  const safeIndex = Math.min(modalImageIndex, Math.max(images.length - 1, 0));
+  const activeImage = images[safeIndex] || "";
   modalContent.innerHTML = `
     <div class="modal__header">
       <div>
@@ -474,8 +479,19 @@ function renderProductModal(product) {
     <div class="modal__body">
       <div class="modal__gallery" style="background:${color.hex};">
         <div class="gallery__label">${color.name}</div>
+        <div class="gallery__main">
+          ${
+            activeImage
+              ? `<img src="${activeImage}" alt="${product.name}" class="gallery__main-img" loading="lazy">`
+              : `<div class="gallery__placeholder">Sin imagen</div>`
+          }
+        </div>
         <div class="gallery__images">
-          ${product.images.map((img, idx) => `<div class="gallery__thumb ${idx === 0 ? "gallery__thumb--active" : ""}">${img}</div>`).join("")}
+          ${images.map((img, idx) => `
+            <button class="gallery__thumb ${idx === safeIndex ? "gallery__thumb--active" : ""}" data-thumb="${idx}" type="button">
+              <img src="${img}" alt="${product.name} ${idx + 1}">
+            </button>
+          `).join("")}
         </div>
       </div>
       <div class="modal__info">
@@ -495,6 +511,13 @@ function renderProductModal(product) {
   modalContent.querySelectorAll("[data-color]").forEach(btn => {
     btn.addEventListener("click", () => {
       modalColorIndex = Number(btn.dataset.color);
+      modalImageIndex = 0;
+      renderProductModal(product);
+    });
+  });
+  modalContent.querySelectorAll("[data-thumb]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      modalImageIndex = Number(btn.dataset.thumb);
       renderProductModal(product);
     });
   });
