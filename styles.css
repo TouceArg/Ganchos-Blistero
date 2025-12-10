@@ -210,11 +210,24 @@ button:active { transform: translateY(0); }
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 34px;
   align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.92) 35%, rgba(255,255,255,0.8) 100%),
+              url("Publicidad/hero/hero.JPG") center/cover no-repeat;
+  filter: grayscale(8%);
+  z-index: 0;
 }
 .hero__side {
   display: grid;
   gap: 18px;
   align-items: start;
+  position: relative;
+  z-index: 1;
 }
 .hero__visual {
   position: relative;
