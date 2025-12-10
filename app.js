@@ -151,6 +151,12 @@ function formatCurrency(value) {
   return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(value);
 }
 
+function getShipping(subtotal) {
+  if (subtotal <= 0) return 0;
+  // Envío fijo si el subtotal es bajo, gratis si supera el umbral
+  return subtotal >= 20000 ? 0 : 1900;
+}
+
 function normalizeImageUrl(url) {
   if (!url) return "";
   const driveMatch = url.match(/https?:\/\/drive\.google\.com\/file\/d\/([^/]+)/);
@@ -750,13 +756,15 @@ async function fetchCatalog() {
   renderCombos();
   const sanitizeItem = (item) => {
     if (!item || !item.id) return null;
+    const name = item.name || "Producto";
     const type = item.type === "combo" ? "combo" : "product";
     const price = Number(item.price) || 0;
     const size = item.size || "8 cm";
     const description = item.description || "";
+    const badge = item.badge || "";
     const colors = Array.isArray(item.colors) && item.colors.length ? item.colors : [{ name: "Negro", hex: "#111" }];
     const images = Array.isArray(item.images) && item.images.length ? item.images : ["Producto"];
-    return { ...item, type, price, size, description, colors, images };
+    return { ...item, name, badge, type, price, size, description, colors, images };
   };
   try {
     const res = await fetch(API_URL);
