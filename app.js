@@ -99,6 +99,7 @@ let combos = [
 const cart = JSON.parse(localStorage.getItem("gb-cart") || "{}");
 let activeFilter = "all";
 let modalColorIndex = 0;
+let modalImageIndex = 0;
 let searchTerm = "";
 
 const catalogGrid = document.getElementById("catalogGrid");
@@ -150,9 +151,13 @@ function formatCurrency(value) {
   return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(value);
 }
 
-function getShipping(subtotal) {
-  if (pickupToggle?.checked) return 0;
-  return subtotal > 40000 ? 0 : 1900;
+function normalizeImageUrl(url) {
+  if (!url) return "";
+  const driveMatch = url.match(/https?:\/\/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (driveMatch) {
+    return `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
+  }
+  return url.trim();
 }
 
 function renderCatalog() {
@@ -456,12 +461,35 @@ function openProductModal(id) {
   const product = [...products, ...combos].find(p => p.id === id);
   if (!product) return;
   modalColorIndex = 0;
+  modalImageIndex = 0;
   renderProductModal(product);
   productModal.classList.add("modal--open");
 }
 
 function renderProductModal(product) {
   const color = product.colors[modalColorIndex] || product.colors[0];
+  // Normaliza imágenes: admite arrays en string como ["url1","url2"]
+  const rawImages = product.images && product.images.length ? product.images : ["Imagen no disponible"];
+  let images = [];
+  rawImages.forEach(item => {
+    if (typeof item === "string" && item.trim().startsWith("[")) {
+      try {
+        const parsed = JSON.parse(item);
+        if (Array.isArray(parsed)) images.push(...parsed);
+        else images.push(item);
+      } catch (_) {
+        images.push(item);
+      }
+    } else {
+      images.push(item);
+    }
+  });
+  images = images.map(normalizeImageUrl).filter(Boolean);
+  if (!images.length) images = ["Imagen no disponible"];
+  if (modalImageIndex >= images.length) modalImageIndex = 0;
+  const currentImage = images[modalImageIndex];
+  const isImageUrl = /^https?:\/\//.test(currentImage);
+
   modalContent.innerHTML = `
     <div class="modal__header">
       <div>
@@ -474,9 +502,8 @@ function renderProductModal(product) {
     <div class="modal__body">
       <div class="modal__gallery" style="background:${color.hex};">
         <div class="gallery__label">${color.name}</div>
-        <div class="gallery__images">
-          ${product.images.map((img, idx) => `<div class="gallery__thumb ${idx === 0 ? "gallery__thumb--active" : ""}">${img}</div>`).join("")}
-        </div>
+        ${isImageUrl ? `<img class="gallery__main" src="${currentImage}" alt="${product.name}">` : `<div class="gallery__placeholder">${currentImage}</div>`}
+        ${images.length > 1 ? `<div class="gallery__thumbs">${images.map((img, idx) => `<button class="gallery__thumb ${idx === modalImageIndex ? "gallery__thumb--active" : ""}" data-img="${idx}" aria-label="Imagen ${idx + 1}"></button>`).join("")}</div>` : ""}
       </div>
       <div class="modal__info">
         <div class="card__price" style="font-size:26px;">${formatCurrency(product.price)} <small>+ IVA</small></div>
@@ -495,6 +522,13 @@ function renderProductModal(product) {
   modalContent.querySelectorAll("[data-color]").forEach(btn => {
     btn.addEventListener("click", () => {
       modalColorIndex = Number(btn.dataset.color);
+      modalImageIndex = 0;
+      renderProductModal(product);
+    });
+  });
+  modalContent.querySelectorAll("[data-img]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      modalImageIndex = Number(btn.dataset.img);
       renderProductModal(product);
     });
   });
@@ -511,7 +545,7 @@ async function createPreference(items) {
 
 async function handleCheckout() {
   if (!isCheckoutReady()) {
-    alert("Completa email y c¾digo postal antes de enviar.");
+    alert("Completa email y código postal antes de enviar.");
     return;
   }
   const items = Object.values(cart);
@@ -612,7 +646,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (currentStep === 2) {
         if (!isCheckoutReady()) {
-          alert("Completa nombre, tel├®fono y email antes de continuar.");
+          alert("Completa nombre, teléfono y email antes de continuar.");
           return;
         }
         goToStep(3);
