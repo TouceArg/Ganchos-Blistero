@@ -506,9 +506,10 @@ function renderProductModal(product) {
       <button class="ghost-btn" onclick="closeProductModal()">Cerrar</button>
     </div>
     <div class="modal__body">
-      <div class="modal__gallery" style="background:${color.hex};">
-        <div class="gallery__label">${color.name}</div>
-        ${isImageUrl ? `<img class="gallery__main" src="${currentImage}" alt="${product.name}">` : `<div class="gallery__placeholder">${currentImage}</div>`}
+      <div class="modal__gallery">
+        <div class="gallery__label"><span class="color-dot" style="background:${color.hex};"></span>${color.name}</div>
+        ${isImageUrl ? `<img class="gallery__main" src="${currentImage}" alt="${product.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">` : ""}
+        <div class="gallery__placeholder" style="${isImageUrl ? "display:none;" : ""}">${isImageUrl ? "Imagen no disponible" : currentImage}</div>
         ${images.length > 1 ? `<div class="gallery__thumbs">${images.map((img, idx) => `<button class="gallery__thumb ${idx === modalImageIndex ? "gallery__thumb--active" : ""}" data-img="${idx}" aria-label="Imagen ${idx + 1}"></button>`).join("")}</div>` : ""}
       </div>
       <div class="modal__info">
