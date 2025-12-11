@@ -1,0 +1,6 @@
+[[redirects]]
+  from = "/api/*"
+  to = "https://ganchos-blistero-production.up.railway.app/:splat"
+  status = 200
+  force = true
+

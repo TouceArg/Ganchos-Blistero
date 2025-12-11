@@ -130,8 +130,8 @@ let currentStep = 1;
 const navToggle = document.getElementById("navToggle");
 const navElement = document.querySelector(".nav");
 const searchInput = document.getElementById("searchInput");
-const API_URL = "https://ganchos-blistero-production.up.railway.app/api/catalogo";
-const API_FALLBACK = "/api/catalogo";
+const API_URL = "/api/catalogo";
+const API_FALLBACK = "https://ganchos-blistero-production.up.railway.app/api/catalogo";
 const CONTACT_URL = "https://ganchos-blistero-production.up.railway.app/api/contacto";
 const ORDER_URL = "https://ganchos-blistero-production.up.railway.app/api/orders";
 const PAY_URL = "https://ganchos-blistero-production.up.railway.app/api/pago/create";
@@ -830,5 +830,4 @@ function hideLoader() {
   if (!loaderOverlay) return;
   loaderOverlay.classList.remove("is-visible");
 }
-
 
