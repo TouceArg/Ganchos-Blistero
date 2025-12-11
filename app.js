@@ -764,8 +764,15 @@ async function fetchCatalog() {
     const size = item.size || "8 cm";
     const description = item.description || "";
     const badge = item.badge || "";
-    const colors = Array.isArray(item.colors) && item.colors.length ? item.colors : [{ name: "Negro", hex: "#111" }];
-    const images = Array.isArray(item.images) && item.images.length ? item.images : ["Producto"];
+    const parseField = (val, fallback = []) => {
+      if (Array.isArray(val)) return val;
+      if (typeof val === "string" && val.trim().startsWith("[")) {
+        try { const parsed = JSON.parse(val); if (Array.isArray(parsed)) return parsed; } catch (_) {}
+      }
+      return fallback;
+    };
+    const colors = parseField(item.colors, [{ name: "Negro", hex: "#111" }]);
+    const images = parseField(item.images, ["Imagen no disponible"]);
     return { ...item, name, badge, type, price, size, description, colors, images };
   };
   try {
@@ -818,7 +825,6 @@ function hideLoader() {
   if (!loaderOverlay) return;
   loaderOverlay.classList.remove("is-visible");
 }
-
 
 
 
