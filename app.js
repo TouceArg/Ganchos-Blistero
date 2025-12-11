@@ -171,17 +171,24 @@ function normalizeImages(arr) {
   const out = [];
   (arr || []).forEach(img => {
     if (!img) return;
+    const raw = String(img);
     // Si viene como string con array adentro
-    if (typeof img === "string" && img.trim().startsWith("[")) {
+    if (raw.trim().startsWith("[")) {
       try {
-        const parsed = JSON.parse(img);
+        const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
           parsed.forEach(p => out.push(normalizeImageUrl(String(p))));
           return;
         }
       } catch (_) {}
     }
-    out.push(normalizeImageUrl(String(img)));
+    // Si incluye http en el string, extraemos el primer match
+    const match = raw.match(/https?:\/\/[^\s'"]+/);
+    if (match) {
+      out.push(normalizeImageUrl(match[0]));
+    } else {
+      out.push(normalizeImageUrl(raw));
+    }
   });
   return out.filter(Boolean);
 }
