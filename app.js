@@ -130,8 +130,8 @@ let currentStep = 1;
 const navToggle = document.getElementById("navToggle");
 const navElement = document.querySelector(".nav");
 const searchInput = document.getElementById("searchInput");
-const API_URL = "/api/catalogo";
-const API_FALLBACK = "https://ganchos-blistero-production.up.railway.app/api/catalogo";
+const API_URL = "https://ganchos-blistero-production.up.railway.app/api/catalogo";
+const API_FALLBACK = null;
 const CONTACT_URL = "https://ganchos-blistero-production.up.railway.app/api/contacto";
 const ORDER_URL = "https://ganchos-blistero-production.up.railway.app/api/orders";
 const PAY_URL = "https://ganchos-blistero-production.up.railway.app/api/pago/create";
@@ -782,14 +782,11 @@ async function fetchCatalog() {
   };
   try {
     let data = [];
-    try {
-      const res = await fetch(API_URL);
-      data = await res.json();
-    } catch (err) {
-      console.warn("Falla API_URL, intento fallback /api", err);
-      const res = await fetch(API_FALLBACK);
-      data = await res.json();
-    }
+    const res = await fetch(API_URL);
+    const text = await res.text();
+    // Si viene HTML (error), lanzamos para usar fallback
+    if (text.trim().startsWith("<")) throw new Error("Respuesta no JSON");
+    data = JSON.parse(text);
     const sanitized = (Array.isArray(data) ? data : []).map(sanitizeItem).filter(Boolean);
     products = sanitized.filter(d => d.type === "product");
     combos = sanitized.filter(d => d.type === "combo");
@@ -830,4 +827,3 @@ function hideLoader() {
   if (!loaderOverlay) return;
   loaderOverlay.classList.remove("is-visible");
 }
-
