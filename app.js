@@ -502,7 +502,27 @@ function openProductModal(id) {
 function renderProductModal(product) {
   const color = product.colors[modalColorIndex] || product.colors[0];
   // Normaliza imágenes: admite arrays anidados o string de array
-  let images = normalizeImages(product.images && product.images.length ? product.images : ["Imagen no disponible"]);
+  let images = [];
+  const rawImages = product.images && product.images.length ? product.images : ["Imagen no disponible"];
+  rawImages.forEach(img => {
+    const str = String(img || "").trim();
+    if (str.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(str);
+        if (Array.isArray(parsed)) {
+          parsed.forEach(p => images.push(normalizeImageUrl(String(p))));
+          return;
+        }
+      } catch (_) {}
+    }
+    // Si ya es una URL, úsala tal cual
+    if (/https?:\/\//.test(str)) {
+      images.push(normalizeImageUrl(str));
+    } else {
+      images.push(str);
+    }
+  });
+  images = images.filter(Boolean);
   if (!images.length) images = ["Imagen no disponible"];
   if (modalImageIndex >= images.length) modalImageIndex = 0;
   const currentImage = images[modalImageIndex];
