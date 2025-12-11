@@ -167,6 +167,25 @@ function normalizeImageUrl(url) {
   return url.trim();
 }
 
+function normalizeImages(arr) {
+  const out = [];
+  (arr || []).forEach(img => {
+    if (!img) return;
+    // Si viene como string con array adentro
+    if (typeof img === "string" && img.trim().startsWith("[")) {
+      try {
+        const parsed = JSON.parse(img);
+        if (Array.isArray(parsed)) {
+          parsed.forEach(p => out.push(normalizeImageUrl(String(p))));
+          return;
+        }
+      } catch (_) {}
+    }
+    out.push(normalizeImageUrl(String(img)));
+  });
+  return out.filter(Boolean);
+}
+
 function renderCatalog() {
   if (!catalogGrid) return;
   if (isLoadingCatalog) {
@@ -475,23 +494,8 @@ function openProductModal(id) {
 
 function renderProductModal(product) {
   const color = product.colors[modalColorIndex] || product.colors[0];
-  // Normaliza imágenes: admite arrays en string como ["url1","url2"]
-  const rawImages = product.images && product.images.length ? product.images : ["Imagen no disponible"];
-  let images = [];
-  rawImages.forEach(item => {
-    if (typeof item === "string" && item.trim().startsWith("[")) {
-      try {
-        const parsed = JSON.parse(item);
-        if (Array.isArray(parsed)) images.push(...parsed);
-        else images.push(item);
-      } catch (_) {
-        images.push(item);
-      }
-    } else {
-      images.push(item);
-    }
-  });
-  images = images.map(normalizeImageUrl).filter(Boolean);
+  // Normaliza imágenes: admite arrays anidados o string de array
+  let images = normalizeImages(product.images && product.images.length ? product.images : ["Imagen no disponible"]);
   if (!images.length) images = ["Imagen no disponible"];
   if (modalImageIndex >= images.length) modalImageIndex = 0;
   const currentImage = images[modalImageIndex];
@@ -764,15 +768,16 @@ async function fetchCatalog() {
     const size = item.size || "8 cm";
     const description = item.description || "";
     const badge = item.badge || "";
-    const parseField = (val, fallback = []) => {
-      if (Array.isArray(val)) return val;
-      if (typeof val === "string" && val.trim().startsWith("[")) {
-        try { const parsed = JSON.parse(val); if (Array.isArray(parsed)) return parsed; } catch (_) {}
-      }
-      return fallback;
-    };
-    const colors = parseField(item.colors, [{ name: "Negro", hex: "#111" }]);
-    const images = parseField(item.images, ["Imagen no disponible"]);
+  const parseField = (val, fallback = []) => {
+    if (!val) return fallback;
+    if (Array.isArray(val)) return val;
+    if (typeof val === "string" && val.trim().startsWith("[")) {
+      try { const parsed = JSON.parse(val); if (Array.isArray(parsed)) return parsed; } catch (_) {}
+    }
+    return fallback;
+  };
+  const colors = parseField(item.colors, [{ name: "Negro", hex: "#111" }]);
+  const images = parseField(item.images, ["Imagen no disponible"]);
     return { ...item, name, badge, type, price, size, description, colors, images };
   };
   try {
@@ -825,9 +830,5 @@ function hideLoader() {
   if (!loaderOverlay) return;
   loaderOverlay.classList.remove("is-visible");
 }
-
-
-
-
 
 
