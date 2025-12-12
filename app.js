@@ -169,6 +169,7 @@ function normalizeImageUrl(url) {
 
 function normalizeImages(arr) {
   const out = [];
+  const buildDrive = (id) => `https://drive.google.com/uc?export=view&id=${id}`;
   (arr || []).forEach(img => {
     if (!img) return;
     const raw = String(img);
@@ -187,7 +188,12 @@ function normalizeImages(arr) {
     if (match) {
       out.push(normalizeImageUrl(match[0]));
     } else {
-      out.push(normalizeImageUrl(raw));
+      // Si solo llega un ID de Drive, lo convertimos
+      if (/^[A-Za-z0-9_-]{20,}$/.test(raw.trim())) {
+        out.push(buildDrive(raw.trim()));
+      } else {
+        out.push(normalizeImageUrl(raw));
+      }
     }
   });
   return out.filter(Boolean);
@@ -834,4 +840,3 @@ function hideLoader() {
   if (!loaderOverlay) return;
   loaderOverlay.classList.remove("is-visible");
 }
-
