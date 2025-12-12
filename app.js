@@ -784,8 +784,13 @@ async function fetchCatalog() {
   const parseField = (val, fallback = []) => {
     if (!val) return fallback;
     if (Array.isArray(val)) return val;
-    if (typeof val === "string" && val.trim().startsWith("[")) {
-      try { const parsed = JSON.parse(val); if (Array.isArray(parsed)) return parsed; } catch (_) {}
+    if (typeof val === "string") {
+      const trimmed = val.trim();
+      if (trimmed.startsWith("[")) {
+        try { const parsed = JSON.parse(trimmed); if (Array.isArray(parsed)) return parsed; } catch (_) {}
+      }
+      // Si es string plano (ID o URL), lo devolvemos como array de 1
+      return [trimmed];
     }
     return fallback;
   };
