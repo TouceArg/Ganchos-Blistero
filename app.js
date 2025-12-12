@@ -796,7 +796,8 @@ async function fetchCatalog() {
   };
   const colors = parseField(item.colors, [{ name: "Negro", hex: "#111" }]);
   const images = parseField(item.images, ["Imagen no disponible"]);
-    return { ...item, name, badge, type, price, size, description, colors, images };
+    const imageLabel = item.imageLabel || (!images.length || images[0] === "Imagen no disponible" ? name.charAt(0) || "GB" : "");
+    return { ...item, name, badge, type, price, size, description, colors, images, imageLabel };
   };
   try {
     let data = [];
