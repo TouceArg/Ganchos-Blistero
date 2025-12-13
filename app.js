@@ -98,7 +98,6 @@ let combos = [
 
 const cart = JSON.parse(localStorage.getItem("gb-cart") || "{}");
 let activeFilter = "all";
-let activeColorFilter = "all";
 let modalColorIndex = 0;
 let modalImageIndex = 0;
 let searchTerm = "";
@@ -208,24 +207,22 @@ function renderCatalog() {
   }
   const filtered = products.filter(p => {
     const sizeMatch = activeFilter === "all" ? true : p.size === activeFilter;
-    const colorMatch = activeColorFilter === "all" ? true : (p.colors || []).some(c => c.name?.toLowerCase().includes(activeColorFilter));
     const text = (p.name + " " + p.description).toLowerCase();
     const term = searchTerm.toLowerCase();
     const searchMatch = term ? text.includes(term) : true;
-    return sizeMatch && colorMatch && searchMatch;
+    return sizeMatch && searchMatch;
   });
   catalogGrid.innerHTML = filtered.map(p => `
     <article class="card" data-view="${p.id}">
       <div class="card__tag">${p.badge}</div>
       <div class="card__image" data-view="${p.id}">
-        ${p.imageLabel}
+        ${p.images?.[0] && /^https?:\/\//.test(p.images[0])
+          ? `<img src="${p.images[0]}" alt="${p.name}" onerror="this.style.display='none';">`
+          : `<span class="card__label">${p.imageLabel || p.name.charAt(0)}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
       <h3 class="card__title">${p.name}</h3>
       <p class="card__desc">${p.description}</p>
-      <div class="swatches">
-        ${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${c.name}"></span>`).join("")}
-      </div>
       <div class="card__footer">
         <div class="card__price">${formatCurrency(p.price)} <small>+ IVA</small></div>
         <button class="minimal-btn" data-action="view" data-id="${p.id}">Ver</button>
@@ -431,7 +428,6 @@ function toggleCart(open) {
 function renderFilters() {
   if (!filterBar) return;
   const filters = ["all", "12 cm", "8 cm"];
-  const colorFilters = ["all", "negro", "blanco"];
   filterBar.innerHTML = `
     <div class="filter-group">
       ${filters.map(f => `
@@ -440,24 +436,10 @@ function renderFilters() {
         </button>
       `).join("")}
     </div>
-    <div class="filter-group">
-      ${colorFilters.map(f => `
-        <button class="filter-chip ${activeColorFilter === f ? "filter-chip--active" : ""}" data-color-filter="${f}">
-          ${f === "all" ? "Todos los colores" : f}
-        </button>
-      `).join("")}
-    </div>
   `;
   filterBar.querySelectorAll("[data-filter]").forEach(btn => {
     btn.addEventListener("click", () => {
       activeFilter = btn.dataset.filter;
-      renderFilters();
-      renderCatalog();
-    });
-  });
-  filterBar.querySelectorAll("[data-color-filter]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      activeColorFilter = btn.dataset.colorFilter;
       renderFilters();
       renderCatalog();
     });
@@ -554,24 +536,12 @@ function renderProductModal(product) {
       <div class="modal__info">
         <div class="card__price" style="font-size:26px;">${formatCurrency(product.price)} <small>+ IVA</small></div>
         <div class="badge">Medida: ${product.size}</div>
-        <div class="modal__swatches">
-          ${product.colors.map((c, idx) => `
-            <button class="swatch swatch--btn ${idx === modalColorIndex ? "swatch--active" : ""}" style="background:${c.hex}" data-color="${idx}" title="${c.name}"></button>
-          `).join("")}
-        </div>
         <div class="modal__actions">
           <button class="minimal-btn" onclick="addToCart('${product.id}')">Agregar al carrito</button>
         </div>
       </div>
     </div>
   `;
-  modalContent.querySelectorAll("[data-color]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      modalColorIndex = Number(btn.dataset.color);
-      modalImageIndex = 0;
-      renderProductModal(product);
-    });
-  });
   modalContent.querySelectorAll("[data-img]").forEach(btn => {
     btn.addEventListener("click", () => {
       modalImageIndex = Number(btn.dataset.img);
@@ -815,10 +785,10 @@ async function fetchCatalog() {
     }
     return fallback;
   };
-  const colors = [{ name: "Negro", hex: "#111" }, { name: "Blanco", hex: "#f7f7f9" }];
+  const colors = [{ name: "Negro", hex: "#111" }];
   const images = parseField(item.images, ["Imagen no disponible"]);
-    const imageLabel = item.imageLabel || (!images.length || images[0] === "Imagen no disponible" ? name.charAt(0) || "GB" : "");
-    return { ...item, name, badge, type, price, size, description, colors, images, imageLabel };
+  const imageLabel = item.imageLabel || (!images.length || images[0] === "Imagen no disponible" ? name.charAt(0) || "GB" : "");
+  return { ...item, name, badge, type, price, size, description, colors, images, imageLabel };
   };
   try {
     let data = [];
