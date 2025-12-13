@@ -98,6 +98,7 @@ let combos = [
 
 const cart = JSON.parse(localStorage.getItem("gb-cart") || "{}");
 let activeFilter = "all";
+let activeColorFilter = "all";
 let modalColorIndex = 0;
 let modalImageIndex = 0;
 let searchTerm = "";
@@ -207,10 +208,11 @@ function renderCatalog() {
   }
   const filtered = products.filter(p => {
     const sizeMatch = activeFilter === "all" ? true : p.size === activeFilter;
+    const colorMatch = activeColorFilter === "all" ? true : (p.colors || []).some(c => c.name?.toLowerCase().includes(activeColorFilter));
     const text = (p.name + " " + p.description).toLowerCase();
     const term = searchTerm.toLowerCase();
     const searchMatch = term ? text.includes(term) : true;
-    return sizeMatch && searchMatch;
+    return sizeMatch && colorMatch && searchMatch;
   });
   catalogGrid.innerHTML = filtered.map(p => `
     <article class="card" data-view="${p.id}">
@@ -429,14 +431,33 @@ function toggleCart(open) {
 function renderFilters() {
   if (!filterBar) return;
   const filters = ["all", "12 cm", "8 cm"];
-  filterBar.innerHTML = filters.map(f => `
-    <button class="filter-chip ${activeFilter === f ? "filter-chip--active" : ""}" data-filter="${f}">
-      ${f === "all" ? "Todos" : f}
-    </button>
-  `).join("");
+  const colorFilters = ["all", "negro", "blanco"];
+  filterBar.innerHTML = `
+    <div class="filter-group">
+      ${filters.map(f => `
+        <button class="filter-chip ${activeFilter === f ? "filter-chip--active" : ""}" data-filter="${f}">
+          ${f === "all" ? "Todos" : f}
+        </button>
+      `).join("")}
+    </div>
+    <div class="filter-group">
+      ${colorFilters.map(f => `
+        <button class="filter-chip ${activeColorFilter === f ? "filter-chip--active" : ""}" data-color-filter="${f}">
+          ${f === "all" ? "Todos los colores" : f}
+        </button>
+      `).join("")}
+    </div>
+  `;
   filterBar.querySelectorAll("[data-filter]").forEach(btn => {
     btn.addEventListener("click", () => {
       activeFilter = btn.dataset.filter;
+      renderFilters();
+      renderCatalog();
+    });
+  });
+  filterBar.querySelectorAll("[data-color-filter]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeColorFilter = btn.dataset.colorFilter;
       renderFilters();
       renderCatalog();
     });
@@ -794,7 +815,7 @@ async function fetchCatalog() {
     }
     return fallback;
   };
-  const colors = parseField(item.colors, [{ name: "Negro", hex: "#111" }]);
+  const colors = [{ name: "Negro", hex: "#111" }, { name: "Blanco", hex: "#f7f7f9" }];
   const images = parseField(item.images, ["Imagen no disponible"]);
     const imageLabel = item.imageLabel || (!images.length || images[0] === "Imagen no disponible" ? name.charAt(0) || "GB" : "");
     return { ...item, name, badge, type, price, size, description, colors, images, imageLabel };
