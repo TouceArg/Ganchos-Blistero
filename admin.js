@@ -11,9 +11,28 @@ const summaryCount = document.getElementById("summaryCount");
 const statusChartEl = document.getElementById("statusChart");
 const dailyChartEl = document.getElementById("dailyChart");
 const topItemsChartEl = document.getElementById("topItemsChart");
+// Productos
+const pName = document.getElementById("pName");
+const pPrice = document.getElementById("pPrice");
+const pSize = document.getElementById("pSize");
+const pType = document.getElementById("pType");
+const pBadge = document.getElementById("pBadge");
+const pDescription = document.getElementById("pDescription");
+const pImageUrl = document.getElementById("pImageUrl");
+const pImageFile = document.getElementById("pImageFile");
+const uploadImageBtn = document.getElementById("uploadImageBtn");
+const createProductBtn = document.getElementById("createProductBtn");
+const uploadStatus = document.getElementById("uploadStatus");
+const productMsg = document.getElementById("productMsg");
+const productList = document.getElementById("productList");
+const tabOrders = document.getElementById("tabOrders");
+const tabProducts = document.getElementById("tabProducts");
+const ordersSection = document.getElementById("ordersSection");
+const productsSection = document.getElementById("productsSection");
 
 let adminToken = localStorage.getItem("gb-admin-token") || "";
 let orders = [];
+let products = [];
 let statusChart;
 let dailyChart;
 let topItemsChart;
@@ -297,3 +316,145 @@ if (adminToken) {
   tokenInput.value = adminToken;
   fetchOrders();
 }
+
+// ---------- Productos ----------
+async function uploadImage() {
+  try {
+    if (!pImageFile?.files?.length && !pImageUrl?.value) {
+      alert("Sube un archivo o pega una URL.");
+      return null;
+    }
+    uploadStatus.style.display = "inline-flex";
+    uploadStatus.textContent = "Subiendo...";
+    const body = {};
+    if (pImageFile?.files?.length) {
+      const file = pImageFile.files[0];
+      const base64 = await fileToBase64(file);
+      body.image = base64;
+    } else {
+      body.image = pImageUrl.value.trim();
+    }
+    body.folder = "ganchos";
+    const res = await fetch(`${API_BASE}/upload-image`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    uploadStatus.textContent = "Imagen subida";
+    return data.url;
+  } catch (err) {
+    uploadStatus.textContent = "Error subiendo";
+    return null;
+  } finally {
+    setTimeout(() => (uploadStatus.style.display = "none"), 2000);
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function createProduct() {
+  try {
+    const name = pName?.value.trim();
+    const price = Number(pPrice?.value || 0);
+    const size = pSize?.value.trim();
+    const type = pType?.value || "product";
+    const badge = pBadge?.value.trim();
+    const description = pDescription?.value.trim();
+    if (!name || !price || !size) {
+      alert("Nombre, precio y medida son obligatorios.");
+      return;
+    }
+    let imageUrl = pImageUrl?.value.trim() || "";
+    if (!imageUrl && pImageFile?.files?.length) {
+      imageUrl = await uploadImage();
+      if (!imageUrl) return;
+    }
+    const payload = {
+      name,
+      price,
+      size,
+      type,
+      badge,
+      description,
+      images: imageUrl ? [imageUrl] : [],
+    };
+    const res = await fetch(`${API_BASE}/products`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error();
+    productMsg.style.display = "inline-flex";
+    productMsg.textContent = "Guardado";
+    await fetchProducts();
+    pName.value = "";
+    pPrice.value = "";
+    pSize.value = "";
+    pBadge.value = "";
+    pDescription.value = "";
+    pImageUrl.value = "";
+    if (pImageFile) pImageFile.value = "";
+    setTimeout(() => (productMsg.style.display = "none"), 2000);
+  } catch (err) {
+    productMsg.style.display = "inline-flex";
+    productMsg.textContent = "Error al guardar";
+    setTimeout(() => (productMsg.style.display = "none"), 2000);
+  }
+}
+
+async function fetchProducts() {
+  try {
+    const res = await fetch(`${API_BASE}/catalogo`);
+    if (!res.ok) throw new Error();
+    products = await res.json();
+    renderProductsList();
+  } catch (err) {
+    productList.innerHTML = "<div class=\"notes\">No se pudieron cargar productos</div>";
+  }
+}
+
+function renderProductsList() {
+  if (!productList) return;
+  const rows = products
+    .map(
+      (p) => `<div class="notes" style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+        <strong>${p.name || "-"}</strong> · ${p.size || ""} · ${p.type || ""}
+        <div>${formatCurrency(p.price || 0)}</div>
+        <div style="font-size:11px; color:#9fa6b9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+          ${(Array.isArray(p.images) && p.images[0]) ? p.images[0] : "Sin imagen"}
+        </div>
+      </div>`
+    )
+    .join("");
+  productList.innerHTML = rows || '<div class="notes">Sin productos</div>';
+}
+
+uploadImageBtn?.addEventListener("click", uploadImage);
+createProductBtn?.addEventListener("click", createProduct);
+refreshBtn?.addEventListener("click", () => {
+  fetchOrders();
+  fetchProducts();
+});
+
+tabOrders?.addEventListener("click", () => {
+  ordersSection?.classList.remove("hidden");
+  productsSection?.classList.add("hidden");
+  tabOrders.classList.remove("btn--ghost");
+  tabProducts?.classList.add("btn--ghost");
+});
+tabProducts?.addEventListener("click", () => {
+  ordersSection?.classList.add("hidden");
+  productsSection?.classList.remove("hidden");
+  tabProducts.classList.remove("btn--ghost");
+  tabOrders?.classList.add("btn--ghost");
+  fetchProducts();
+});
