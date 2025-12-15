@@ -7,11 +7,18 @@ const { GoogleAuth } = require("google-auth-library");
 const contactRoutes = require("./contactRoutes");
 const orderRoutes = require("./ordersRoutes");
 const mpRoutes = require("./mpRoutes");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Supabase client
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const SUPABASE_TABLE = process.env.SUPABASE_TABLE || "products";
+const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
 async function leerHoja() {
   const auth = new GoogleAuth({
@@ -43,7 +50,12 @@ async function leerHoja() {
 
 app.get("/api/catalogo", async (_req, res) => {
   try {
-    const data = await leerHoja();
+    if (supabase) {
+      const { data, error } = await supabase.from(SUPABASE_TABLE).select("*");
+      if (error) throw error;
+      return res.json(data || []);
+    }
+    const data = await leerHoja(); // fallback a Google Sheet si no hay supabase
     res.json(data);
   } catch (err) {
     console.error("Error leyendo hoja:", err);
