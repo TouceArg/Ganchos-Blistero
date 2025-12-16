@@ -1,0 +1,70 @@
+    await fetchProducts();
+  } catch (err) {
+    alert("No se pudo eliminar");
+  }
+}
+
+function startEditProduct(id) {
+  const p = products.find((x) => x.id === id);
+  if (!p) return;
+  editingId = id;
+  pName.value = p.name || "";
+  pPrice.value = p.price || "";
+  pSize.value = p.size || "";
+  pType.value = p.type || "product";
+  pBadge.value = p.badge || "";
+  pDescription.value = p.description || "";
+  pImageUrl.value = Array.isArray(p.images) && p.images[0] ? p.images[0] : "";
+  createProductBtn.textContent = "Actualizar producto";
+  productMsg.style.display = "inline-flex";
+  productMsg.textContent = "Editando producto";
+  setTimeout(() => (productMsg.style.display = "none"), 2000);
+}
+
+async function fetchProducts() {
+  try {
+    const res = await fetch(`${API_BASE}/catalogo`);
+    if (!res.ok) throw new Error();
+    products = await res.json();
+    renderProductsList();
+  } catch (err) {
+    productList.innerHTML = "<div class=\"notes\">No se pudieron cargar productos</div>";
+  }
+}
+
+function renderProductsList() {
+  if (!productList) return;
+  const rows = products
+    .map(
+      (p) => `<div class="notes" style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+        <strong>${p.name || "-"}</strong> · ${p.size || ""} · ${p.type || ""}
+        <div>${formatCurrency(p.price || 0)}</div>
+        <div style="font-size:11px; color:#9fa6b9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+          ${(Array.isArray(p.images) && p.images[0]) ? p.images[0] : "Sin imagen"}
+        </div>
+      </div>`
+    )
+    .join("");
+  productList.innerHTML = rows || '<div class="notes">Sin productos</div>';
+}
+
+uploadImageBtn?.addEventListener("click", uploadImage);
+createProductBtn?.addEventListener("click", createProduct);
+refreshBtn?.addEventListener("click", () => {
+  fetchOrders();
+  fetchProducts();
+});
+
+tabOrders?.addEventListener("click", () => {
+  ordersSection?.classList.remove("hidden");
+  productsSection?.classList.add("hidden");
+  tabOrders.classList.remove("btn--ghost");
+  tabProducts?.classList.add("btn--ghost");
+});
+tabProducts?.addEventListener("click", () => {
+  ordersSection?.classList.add("hidden");
+  productsSection?.classList.remove("hidden");
+  tabProducts.classList.remove("btn--ghost");
+  tabOrders?.classList.add("btn--ghost");
+  fetchProducts();
+});

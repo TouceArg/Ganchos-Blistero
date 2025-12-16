@@ -20,6 +20,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const SUPABASE_TABLE = process.env.SUPABASE_TABLE || "products";
 const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
 
 // Cloudinary
 cloudinary.config({
@@ -27,6 +28,12 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+const isAdmin = (req) => {
+  if (!ADMIN_TOKEN) return true;
+  const t = req.headers["x-admin-token"] || req.query.token;
+  return t === ADMIN_TOKEN;
+};
 
 async function leerHoja() {
   const auth = new GoogleAuth({
@@ -75,6 +82,7 @@ app.get("/api/catalogo", async (_req, res) => {
 
 // Upload a single image to Cloudinary
 app.post("/api/upload-image", async (req, res) => {
+  if (!isAdmin(req)) return res.status(401).json({ error: "No autorizado" });
   try {
     if (!cloudinary.config().cloud_name) {
       return res.status(500).json({ error: "Cloudinary no está configurado" });
@@ -101,6 +109,7 @@ app.post("/api/upload-image", async (req, res) => {
 
 // Crear producto en Supabase
 app.post("/api/products", async (req, res) => {
+  if (!isAdmin(req)) return res.status(401).json({ error: "No autorizado" });
   try {
     if (!supabase) return res.status(500).json({ error: "Supabase no configurado" });
     const { name, price, size, badge, description, type, images } = req.body;
@@ -122,6 +131,47 @@ app.post("/api/products", async (req, res) => {
   } catch (err) {
     console.error("Error creando producto:", err);
     res.status(500).json({ error: "No se pudo crear el producto" });
+  }
+});
+
+// Actualizar producto
+app.patch("/api/products/:id", async (req, res) => {
+  if (!isAdmin(req)) return res.status(401).json({ error: "No autorizado" });
+  try {
+    if (!supabase) return res.status(500).json({ error: "Supabase no configurado" });
+    const { id } = req.params;
+    const { name, price, size, badge, description, type, images } = req.body;
+    const payload = {};
+    if (name !== undefined) payload.name = name;
+    if (price !== undefined) payload.price = Number(price);
+    if (size !== undefined) payload.size = size;
+    if (badge !== undefined) payload.badge = badge || null;
+    if (description !== undefined) payload.description = description || null;
+    if (type !== undefined) payload.type = type;
+    if (images !== undefined) {
+      payload.images = Array.isArray(images) ? images : images ? [images] : [];
+    }
+    const { data, error } = await supabase.from(SUPABASE_TABLE).update(payload).eq("id", id).select().single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error("Error actualizando producto:", err);
+    res.status(500).json({ error: "No se pudo actualizar el producto" });
+  }
+});
+
+// Eliminar producto
+app.delete("/api/products/:id", async (req, res) => {
+  if (!isAdmin(req)) return res.status(401).json({ error: "No autorizado" });
+  try {
+    if (!supabase) return res.status(500).json({ error: "Supabase no configurado" });
+    const { id } = req.params;
+    const { error } = await supabase.from(SUPABASE_TABLE).delete().eq("id", id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Error eliminando producto:", err);
+    res.status(500).json({ error: "No se pudo eliminar el producto" });
   }
 });
 

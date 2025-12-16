@@ -36,6 +36,7 @@ let products = [];
 let statusChart;
 let dailyChart;
 let topItemsChart;
+let editingId = null;
 
 function formatAddress(o) {
   const lines = [];
@@ -361,7 +362,7 @@ function fileToBase64(file) {
   });
 }
 
-async function createProduct() {
+async function saveProduct() {
   try {
     const name = pName?.value.trim();
     const price = Number(pPrice?.value || 0);
@@ -387,28 +388,67 @@ async function createProduct() {
       description,
       images: imageUrl ? [imageUrl] : [],
     };
-    const res = await fetch(`${API_BASE}/products`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const url = editingId ? `${API_BASE}/products/${editingId}` : `${API_BASE}/products`;
+    const method = editingId ? "PATCH" : "POST";
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json", "x-admin-token": adminToken || "" },
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error();
     productMsg.style.display = "inline-flex";
-    productMsg.textContent = "Guardado";
+    productMsg.textContent = editingId ? "Producto actualizado" : "Producto creado";
     await fetchProducts();
-    pName.value = "";
-    pPrice.value = "";
-    pSize.value = "";
-    pBadge.value = "";
-    pDescription.value = "";
-    pImageUrl.value = "";
-    if (pImageFile) pImageFile.value = "";
-    setTimeout(() => (productMsg.style.display = "none"), 2000);
+    resetProductForm();
   } catch (err) {
     productMsg.style.display = "inline-flex";
     productMsg.textContent = "Error al guardar";
     setTimeout(() => (productMsg.style.display = "none"), 2000);
   }
+}
+
+function resetProductForm() {
+  editingId = null;
+  createProductBtn.textContent = "Crear producto";
+  pName.value = "";
+  pPrice.value = "";
+  pSize.value = "";
+  pBadge.value = "";
+  pDescription.value = "";
+  pImageUrl.value = "";
+  if (pImageFile) pImageFile.value = "";
+  setTimeout(() => (productMsg.style.display = "none"), 2000);
+}
+
+async function deleteProduct(id) {
+  if (!confirm("¿Eliminar este producto?")) return;
+  try {
+    const res = await fetch(`${API_BASE}/products/${id}`, {
+      method: "DELETE",
+      headers: { "x-admin-token": adminToken || "" },
+    });
+    if (!res.ok) throw new Error();
+    await fetchProducts();
+  } catch (err) {
+    alert("No se pudo eliminar");
+  }
+}
+
+function startEditProduct(id) {
+  const p = products.find((x) => x.id === id);
+  if (!p) return;
+  editingId = id;
+  pName.value = p.name || "";
+  pPrice.value = p.price || "";
+  pSize.value = p.size || "";
+  pType.value = p.type || "product";
+  pBadge.value = p.badge || "";
+  pDescription.value = p.description || "";
+  pImageUrl.value = Array.isArray(p.images) && p.images[0] ? p.images[0] : "";
+  createProductBtn.textContent = "Actualizar producto";
+  productMsg.style.display = "inline-flex";
+  productMsg.textContent = "Editando producto";
+  setTimeout(() => (productMsg.style.display = "none"), 2000);
 }
 
 async function fetchProducts() {
@@ -425,21 +465,35 @@ async function fetchProducts() {
 function renderProductsList() {
   if (!productList) return;
   const rows = products
-    .map(
-      (p) => `<div class="notes" style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
-        <strong>${p.name || "-"}</strong> · ${p.size || ""} · ${p.type || ""}
-        <div>${formatCurrency(p.price || 0)}</div>
-        <div style="font-size:11px; color:#9fa6b9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-          ${(Array.isArray(p.images) && p.images[0]) ? p.images[0] : "Sin imagen"}
+    .map((p) => {
+      const img =
+        Array.isArray(p.images) && p.images[0]
+          ? `<img src="${p.images[0]}" alt="${p.name}" class="admin-thumb">`
+          : `<div class="admin-thumb admin-thumb--empty">Sin imagen</div>`;
+      return `<div class="product-row">
+        <div class="product-row__media">${img}</div>
+        <div class="product-row__info">
+          <div class="product-row__title">${p.name || "-"}</div>
+          <div class="product-row__meta">${p.size || ""} · ${p.type || ""} · ${formatCurrency(p.price || 0)}</div>
+          <div class="product-row__desc">${p.description || ""}</div>
         </div>
-      </div>`
-    )
+        <div class="product-row__actions">
+          <button class="btn btn--ghost" data-edit="${p.id}">Editar</button>
+          <button class="btn" data-delete="${p.id}">Eliminar</button>
+        </div>
+      </div>`;
+    })
     .join("");
   productList.innerHTML = rows || '<div class="notes">Sin productos</div>';
+  productList.querySelectorAll("[data-edit]").forEach((btn) =>
+    btn.addEventListener("click", () => startEditProduct(btn.dataset.edit))
+  );
+  productList.querySelectorAll("[data-delete]").forEach((btn) =>
+    btn.addEventListener("click", () => deleteProduct(btn.dataset.delete))
+  );
 }
-
 uploadImageBtn?.addEventListener("click", uploadImage);
-createProductBtn?.addEventListener("click", createProduct);
+createProductBtn?.addEventListener("click", saveProduct);
 refreshBtn?.addEventListener("click", () => {
   fetchOrders();
   fetchProducts();
