@@ -153,9 +153,8 @@ function formatCurrency(value) {
 }
 
 function getShipping(subtotal) {
-  if (subtotal <= 0) return 0;
-  // Envío fijo si el subtotal es bajo, gratis si supera el umbral
-  return subtotal >= 20000 ? 0 : 1900;
+  // Envío desactivado: siempre $0
+  return 0;
 }
 
 function normalizeImageUrl(url) {
