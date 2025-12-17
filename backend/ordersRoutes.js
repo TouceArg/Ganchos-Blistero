@@ -1,6 +1,7 @@
 const { Router } = require("express");
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const { GoogleAuth } = require("google-auth-library");
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const router = Router();
@@ -78,6 +79,20 @@ async function ensureOrderSheet(doc) {
   });
 }
 
+// SMTP para notificaciones de pedidos
+const mailer =
+  process.env.MAIL_USER && process.env.MAIL_PASS
+    ? nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASS,
+        },
+      })
+    : null;
+
 router.post("/", async (req, res) => {
   try {
     const { name, email, phone, total, items, notes, cp, pais, address = {} } = req.body || {};
@@ -107,6 +122,38 @@ router.post("/", async (req, res) => {
       notes: notes || `Pais: ${pais || ""} | CP: ${cp || ""}`,
     };
     await sheet.addRow(payload);
+
+    // Notificar por mail (cliente + admin) si hay credenciales
+    if (mailer && email) {
+      const adminTo = process.env.DEST_EMAIL || process.env.MAIL_USER || email;
+      const itemsText =
+        items
+          ?.map(
+            (i) =>
+              `• ${i.name || i.title || "Item"} x${i.qty || i.quantity || 1} - $${i.price || i.unit_price || 0}`
+          )
+          .join("\n") || "";
+      const baseInfo = `Pedido: ${orderId}\nTotal: $${Number(total || 0)}\nCliente: ${name || ""}\nEmail: ${email}\nTel: ${
+        phone || ""
+      }\nPaís: ${pais || ""} | CP: ${cp || ""}\nNotas: ${payload.notes || ""}\nItems:\n${itemsText}`;
+      try {
+        await mailer.sendMail({
+          from: `"Pedidos Ganchos Blistero" <${process.env.MAIL_USER}>`,
+          to: adminTo,
+          subject: `Nuevo pedido ${orderId}`,
+          text: baseInfo,
+        });
+        await mailer.sendMail({
+          from: `"Ganchos Blistero" <${process.env.MAIL_USER}>`,
+          to: email,
+          subject: `Recibimos tu pedido ${orderId}`,
+          text: `Gracias por tu compra.\n\n${baseInfo}\n\nTe avisaremos cuando se confirme el pago.`,
+        });
+      } catch (mailErr) {
+        console.warn("No se pudo enviar email de pedido:", mailErr?.message || mailErr);
+      }
+    }
+
     res.json({ ok: true, order_id: orderId });
   } catch (err) {
     console.error("Error guardando orden:", err);
