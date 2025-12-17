@@ -1,4 +1,4 @@
-const API_BASE = "https://ganchos-blistero-production.up.railway.app/api";
+﻿const API_BASE = "https://ganchos-blistero-production.up.railway.app/api";
 const loginBlock = document.getElementById("loginBlock");
 const panelBlock = document.getElementById("panelBlock");
 const tokenInput = document.getElementById("tokenInput");
@@ -40,13 +40,13 @@ let editingId = null;
 
 function formatAddress(o) {
   const lines = [];
-  if (o.address_street) lines.push(`Calle y número: ${o.address_street}`);
+  if (o.address_street) lines.push(`Calle y nÃºmero: ${o.address_street}`);
   if (o.address_floor) lines.push(`Piso/Depto: ${o.address_floor}`);
   if (o.address_city) lines.push(`Ciudad: ${o.address_city}`);
   if (o.address_state) lines.push(`Provincia: ${o.address_state}`);
-  if (o.address_country) lines.push(`País: ${o.address_country}`);
+  if (o.address_country) lines.push(`PaÃ­s: ${o.address_country}`);
   if (o.address_zip) lines.push(`CP: ${o.address_zip}`);
-  return lines.length ? lines.join("<br>") : "Sin dirección";
+  return lines.length ? lines.join("<br>") : "Sin direcciÃ³n";
 }
 
 function setVisible(el, show) {
@@ -421,7 +421,7 @@ function resetProductForm() {
 }
 
 async function deleteProduct(id) {
-  if (!confirm("¿Eliminar este producto?")) return;
+  if (!confirm("Â¿Eliminar este producto?")) return;
   try {
     const res = await fetch(`${API_BASE}/products/${id}`, {
       method: "DELETE",
@@ -474,7 +474,7 @@ function renderProductsList() {
         <div class="product-row__media">${img}</div>
         <div class="product-row__info">
           <div class="product-row__title">${p.name || "-"}</div>
-          <div class="product-row__meta">${p.size || ""} · ${p.type || ""} · ${formatCurrency(p.price || 0)}</div>
+          <div class="product-row__meta">${p.size || ""} - ${p.type || ""} - ${formatCurrency(p.price || 0)}</div>
           <div class="product-row__desc">${p.description || ""}</div>
         </div>
         <div class="product-row__actions">

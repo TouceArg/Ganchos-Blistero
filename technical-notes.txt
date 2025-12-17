@@ -1,0 +1,78 @@
+Ganchos Blistero – Notas técnicas
+==================================
+
+Arquitectura
+------------
+- Frontend estático (Netlify): `index.html`, `catalogo.html`, `checkout.html`, `contacto.html`, `styles.css`, `app.js`.
+- Lógica de catálogo en `app.js`: consume `https://ganchos-blistero-production.up.railway.app/api/catalogo`. Sanitiza datos, normaliza colores e imágenes y renderiza cards, destacados, combos, modal y checkout.
+- Backend (Railway, Express): endpoints de catálogo, pedidos, pagos MP, subida de imágenes a Cloudinary y CRUD de productos para el panel admin.
+- Admin panel (`admin.html` + `admin.js`): login por token, pestañas Pedidos y Productos, gráficos con Chart.js, CRUD centralizado (Supabase + Cloudinary).
+
+Catálogo (app.js)
+-----------------
+- `fetchCatalog()`: GET API_URL; si respuesta HTML lanza fallback a datos locales. `sanitizeItem` asegura nombre, tipo (product/combo), price numérico, size, badge, description, colors (parseField + normalización) e imágenes (normalizeImages con soporte array/JSON/ID de Drive/URL). Fallback color negro.
+- Render:
+  - `renderCatalog`, `renderFeatured`, `renderCombos`: usan `p.images[0]` si es URL; `object-fit: contain`. Fallback etiqueta con inicial.
+  - Modal: `normalizeImages` crea un carrusel seguro; si falla muestra placeholder “Imagen no disponible”.
+  - Filtros: por medida (all/8 cm/12 cm) y búsqueda por texto. Swatches pintan colores declarados.
+- Carrito/Checkout:
+  - Combos y productos usan misma estructura; `addToCart` soporta combos y color activo. Clave de carrito incluye color (`id__color`).
+  - Envío: `getShipping(subtotal)` gratis desde $20.000, caso contrario $1900.
+  - Checkout en 3 pasos; botón de pago sólo habilitado si `isCheckoutReady()` true. `PAY_URL` crea preferencia MP; redirige a `init_point`.
+  - Persistencia: `localStorage gb-cart`.
+
+Admin panel (admin.js)
+----------------------
+- Autenticación por token (`ADMIN_TOKEN` en backend). Si válido, muestra tabs Pedidos/Productos.
+- Pedidos:
+  - GET `/api/orders` (filtros por estado/búsqueda), render tabla y charts (estado, total diario, top items).
+  - PATCH `/api/orders/:id` para estado.
+- Productos:
+  - Formulario: nombre, precio, medida, badge, descripción corta, tipo (product/combo), URL de imagen o archivo local.
+  - Subida de archivo: POST `/api/upload-image` -> Cloudinary -> retorna URL pública; se escribe en `pImageUrl`.
+  - Creación: POST `/api/products` (se almacena en Supabase).
+  - Listado/edición: GET `/api/products` -> render tarjetas con miniatura; botones Editar (PATCH) y Eliminar (DELETE).
+  - Nota: el meta muestra “size - type - price”.
+- Estilos admin: `product-row`, `admin-thumb`, header con logo; tabla responsive.
+
+Backend esperado (vars .env)
+----------------------------
+- `ADMIN_TOKEN` (panel y rutas protegidas).
+- Supabase: `SUPABASE_URL`, `SUPABASE_KEY` (service role), `SUPABASE_TABLE` (p.ej. `products`). Tabla recomendada: `id uuid default gen_random_uuid() primary`, `name text NOT NULL`, `price numeric`, `size text`, `badge text`, `description text`, `type text default 'product'`, `images jsonb`, `created_at timestamp default now()`.
+- Cloudinary: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`. Endpoint `/api/upload-image` usa estos valores.
+- Mercado Pago: `MP_ACCESS_TOKEN`, `MP_PUBLIC_KEY`. Rutas `/api/pago/create` generan preferencia; ME2 se valida vía shipments. Para testear: usar credenciales de producción; ME2 requiere habilitación en cuenta.
+
+Imágenes
+--------
+- Recomendado usar Cloudinary URLs (públicas). El parser soporta:
+  - Array JSON en Sheet/API (`["https://..."]`),
+  - ID de Drive (convierte a `https://drive.google.com/uc?export=view&id=...`),
+  - URL directa.
+- Cards y modales usan `object-fit: contain` y fondo blanco; si no hay imagen, se muestra placeholder/label.
+
+Deploy / flujo
+--------------
+- Frontend: push a `main` en GitHub -> Netlify auto-publish (ver `netlify.toml` si aplica).
+- Backend: push a `main` -> Railway redeploy (API en producción).
+- Admin: sirve desde Netlify (mismo dominio) y consume API Railway.
+
+Pruebas rápidas
+---------------
+- Catalog API: abrir `https://ganchos-blistero-production.up.railway.app/api/catalogo` y verificar JSON con imágenes normalizadas.
+- MP ME2: en PowerShell  
+  ```
+  $h=@{Authorization='Bearer APP_USR_xxx'}
+  Invoke-RestMethod -Uri 'https://api.mercadopago.com/checkout/preferences' -Method Post -Headers $h -ContentType 'application/json' -Body '{
+    "items":[{"title":"test ME2","quantity":1,"unit_price":1000}],
+    "shipments":{"mode":"me2","receiver_address":{"zip_code":"1425","street_name":"Prueba","street_number":123}}
+  }'
+  ```
+  Revisar `init_point` / `sandbox_init_point`.
+- Cloudinary: usar formulario en Productos (admin) para subir; confirmar URL en lista.
+- Supabase: crear/editar/eliminar productos desde admin y ver reflejo inmediato en catálogo (sin recarga si se vuelve a llamar fetchCatalog).
+
+Notas finales
+-------------
+- Evitar usar Google Drive como CDN; Cloudinary es estable.
+- Si se añaden nuevos campos en Supabase, actualizar `sanitizeItem` y el formulario admin en consecuencia.
+- Para cambios de estilos globales, tocar `styles.css`; admin estilos inline en `admin.html` (bloque `<style>`).

@@ -217,12 +217,15 @@ function renderCatalog() {
       <div class="card__tag">${p.badge}</div>
       <div class="card__image" data-view="${p.id}">
         ${p.images?.[0] && /^https?:\/\//.test(p.images[0])
-          ? `<img src="${p.images[0]}" alt="${p.name}" onerror="this.style.display='none';">`
-          : `<span class="card__label">${p.imageLabel || p.name.charAt(0)}</span>`}
+          ? `<img src="${p.images[0]}" alt="${p.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">`
+          : `<span class="card__label">${p.imageLabel || (p.name?.charAt(0) || "G")}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
       <h3 class="card__title">${p.name}</h3>
       <p class="card__desc">${p.description}</p>
+      <div class="swatches">
+        ${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${c.name}"></span>`).join("")}
+      </div>
       <div class="card__footer">
         <div class="card__price">${formatCurrency(p.price)} <small>+ IVA</small></div>
         <button class="minimal-btn" data-action="view" data-id="${p.id}">Ver</button>
@@ -251,7 +254,9 @@ function renderFeatured() {
     <article class="card" data-view="${p.id}">
       <div class="card__tag">${p.badge}</div>
       <div class="card__image" data-view="${p.id}">
-        ${p.imageLabel}
+        ${p.images?.[0] && /^https?:\/\//.test(p.images[0])
+          ? `<img src="${p.images[0]}" alt="${p.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">`
+          : `<span class="card__label">${p.imageLabel || (p.name?.charAt(0) || "G")}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
       <h3 class="card__title">${p.name}</h3>
@@ -286,7 +291,9 @@ function renderCombos() {
     <article class="card" data-view="${p.id}">
       <div class="card__tag">${p.badge}</div>
       <div class="card__image" data-view="${p.id}">
-        ${p.imageLabel}
+        ${p.images?.[0] && /^https?:\/\//.test(p.images[0])
+          ? `<img src="${p.images[0]}" alt="${p.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">`
+          : `<span class="card__label">${p.imageLabel || (p.name?.charAt(0) || "G")}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
       <h3 class="card__title">${p.name}</h3>
@@ -312,7 +319,7 @@ function renderCombos() {
 }
 
 function addToCart(id) {
-  const product = products.find(p => p.id === id);
+  const product = [...products, ...combos].find(p => p.id === id);
   if (!product) return;
   const color = product.colors?.[modalColorIndex] || product.colors?.[0] || { name: "" };
   const cartKey = color.name ? `${id}__${color.name}` : id;
@@ -772,23 +779,34 @@ async function fetchCatalog() {
     const size = item.size || "8 cm";
     const description = item.description || "";
     const badge = item.badge || "";
-  const parseField = (val, fallback = []) => {
-    if (!val) return fallback;
-    if (Array.isArray(val)) return val;
-    if (typeof val === "string") {
-      const trimmed = val.trim();
-      if (trimmed.startsWith("[")) {
-        try { const parsed = JSON.parse(trimmed); if (Array.isArray(parsed)) return parsed; } catch (_) {}
+    const parseField = (val, fallback = []) => {
+      if (!val) return fallback;
+      if (Array.isArray(val)) return val;
+      if (typeof val === "string") {
+        const trimmed = val.trim();
+        if (trimmed.startsWith("[")) {
+          try { const parsed = JSON.parse(trimmed); if (Array.isArray(parsed)) return parsed; } catch (_) {}
+        }
+        // Si es string plano (ID o URL), lo devolvemos como array de 1
+        return [trimmed];
       }
-      // Si es string plano (ID o URL), lo devolvemos como array de 1
-      return [trimmed];
-    }
-    return fallback;
-  };
-  const colors = [{ name: "Negro", hex: "#111" }];
-  const images = parseField(item.images, ["Imagen no disponible"]);
-  const imageLabel = item.imageLabel || (!images.length || images[0] === "Imagen no disponible" ? name.charAt(0) || "GB" : "");
-  return { ...item, name, badge, type, price, size, description, colors, images, imageLabel };
+      return fallback;
+    };
+    const colorsRaw = parseField(item.colors, []);
+    let colors = colorsRaw
+      .map((c) =>
+        typeof c === "string"
+          ? { name: c, hex: "#111" }
+          : { name: c.name || "Color", hex: c.hex || "#111" }
+      )
+      .filter(Boolean);
+    if (!colors.length) colors = [{ name: "Negro", hex: "#111" }];
+
+    const images = normalizeImages(parseField(item.images, []));
+    const imageLabel =
+      item.imageLabel ||
+      (!images.length || images[0] === "Imagen no disponible" ? name.charAt(0) || "GB" : "");
+    return { ...item, name, badge, type, price, size, description, colors, images: images.length ? images : ["Imagen no disponible"], imageLabel };
   };
   try {
     let data = [];

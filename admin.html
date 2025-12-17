@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Panel • Ganchos Blistero</title>
+  <title>Panel - Ganchos Blistero</title>
   <link rel="stylesheet" href="styles.css">
   <style>
     body { background:#0f1115; color:#f7f7f7; font-family:"Space Grotesk", system-ui, -apple-system, sans-serif; }
@@ -25,6 +25,19 @@
     th { color:#9fa6b9; font-size:12px; text-transform:uppercase; letter-spacing:0.6px; }
     .pill { background:rgba(255,255,255,0.08); padding:4px 8px; border-radius:10px; font-size:12px; }
     .notes { font-size:12px; color:#cdd2e0; }
+    .header-brand { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    .header-brand img { width:56px; height:56px; object-fit:contain; border-radius:14px; background:#0c0f14; border:1px solid rgba(255,255,255,0.08); padding:6px; }
+    .header-brand .brand-title { font-size:22px; font-weight:700; margin:0; }
+    .header-brand .brand-sub { color:#aeb3c2; margin:0; font-size:13px; }
+    .product-row { display:flex; gap:14px; align-items:flex-start; padding:12px; border:1px solid rgba(255,255,255,0.05); border-radius:12px; margin-bottom:10px; background:#0c0f14; }
+    .product-row__media { flex:0 0 90px; }
+    .admin-thumb { width:90px; height:90px; object-fit:cover; border-radius:12px; border:1px solid rgba(255,255,255,0.08); background:#111420; }
+    .admin-thumb--empty { width:90px; height:90px; display:grid; place-items:center; color:#9fa6b9; font-size:12px; }
+    .product-row__info { flex:1; display:grid; gap:6px; }
+    .product-row__title { font-weight:700; font-size:16px; }
+    .product-row__meta { color:#9fa6b9; font-size:13px; }
+    .product-row__desc { color:#cdd2e0; font-size:13px; line-height:1.4; max-height:46px; overflow:hidden; }
+    .product-row__actions { display:flex; flex-direction:column; gap:8px; }
     .hidden { display:none; }
     .charts { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px; margin-top:16px; }
     .chart-box { background:#0c0f14; border:1px solid rgba(255,255,255,0.05); border-radius:14px; padding:12px; }
@@ -41,9 +54,14 @@
 <body>
   <div class="admin-shell">
     <div class="panel-card">
-      <h1>Panel de administración</h1>
-      <p>Ingresa el token admin para ver y actualizar pedidos o productos.</p>
-      <div id="loginBlock">
+      <div class="header-brand">
+        <img src="img/logo/logo (2).jpg" alt="Ganchos Blistero">
+        <div>
+          <p class="brand-title">Panel de administración</p>
+          <p class="brand-sub">Pedidos, productos y stock en un solo lugar</p>
+        </div>
+      </div>
+      <p>Ingresa el token admin para ver y actualizar pedidos o productos.</p>      <div id="loginBlock">
         <div class="field-row">
           <input type="password" id="tokenInput" placeholder="Token admin">
           <button class="btn" id="loginBtn">Ingresar</button>
@@ -91,13 +109,19 @@
             <canvas id="dailyChart" height="180"></canvas>
           </div>
           <div class="chart-box">
-            <h3>Productos más elegidos</h3>
+            <h3>Productos mas elegidos</h3>
             <canvas id="topItemsChart" height="180"></canvas>
           </div>
         </div>
         </div><!-- /ordersSection -->
         <div id="productsSection" class="hidden">
-          <h2 style="margin:0 0 8px;">Productos</h2>
+          <div class="header-brand" style="margin-bottom:8px;">
+            <img src="img/logo/logo (2).jpg" alt="Ganchos Blistero">
+            <div>
+              <h2 class="brand-title" style="margin:0;">Productos</h2>
+              <p class="brand-sub">Carga centralizada con Cloudinary + Supabase</p>
+            </div>
+          </div>
           <p style="margin:0 0 16px; color:#aeb3c2;">Crear producto centralizado: sube imagen a Cloudinary y guarda en Supabase.</p>
           <div class="panel-card" style="background:#0c0f14; border-color:rgba(255,255,255,0.08);">
             <div class="field-row">
@@ -111,7 +135,7 @@
             </div>
             <div class="field-row">
               <input id="pBadge" type="text" placeholder="Badge (opcional)">
-              <input id="pDescription" type="text" placeholder="Descripción corta (opcional)">
+              <input id="pDescription" type="text" placeholder="Descripcion corta (opcional)">
             </div>
             <div class="field-row">
               <input id="pImageUrl" type="text" placeholder="URL de imagen (opcional si subes archivo)">
