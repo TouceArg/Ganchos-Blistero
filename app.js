@@ -776,6 +776,7 @@ async function fetchCatalog() {
   renderCombos();
   const sanitizeItem = (item) => {
     if (!item || !item.id) return null;
+    if (item.badge === "__hidden__") return null;
     const name = item.name || "Producto";
     const type = item.type === "combo" ? "combo" : "product";
     const price = Number(item.price) || 0;

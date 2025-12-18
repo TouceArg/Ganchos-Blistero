@@ -553,15 +553,20 @@ function renderProductsList() {
         Array.isArray(p.images) && p.images[0]
           ? `<img src="${p.images[0]}" alt="${p.name}" class="admin-thumb">`
           : `<div class="admin-thumb admin-thumb--empty">Sin imagen</div>`;
+      const hidden = p.badge === "__hidden__";
+      const status = hidden ? "No publicado" : "Publicado";
       return `<div class="product-row">
         <div class="product-row__media">${img}</div>
         <div class="product-row__info">
           <div class="product-row__title">${p.name || "-"}</div>
           <div class="product-row__meta">${p.size || ""} - ${p.type || ""} - ${formatCurrency(p.price || 0)}</div>
           <div class="product-row__desc">${p.description || ""}</div>
+          <div class="product-row__status ${hidden ? "status-pill status-pill--off" : "status-pill status-pill--on"}">${status}</div>
         </div>
         <div class="product-row__actions">
           <button class="btn btn--ghost" data-edit="${p.id}">Editar</button>
+          <button class="btn btn--ghost" data-duplicate="${p.id}">Duplicar</button>
+          <button class="btn ${hidden ? "" : "btn--ghost"}" data-toggle="${p.id}">${hidden ? "Publicar" : "Ocultar"}</button>
           <button class="btn" data-delete="${p.id}">Eliminar</button>
         </div>
       </div>`;
@@ -574,6 +579,64 @@ function renderProductsList() {
   productList.querySelectorAll("[data-delete]").forEach((btn) =>
     btn.addEventListener("click", () => deleteProduct(btn.dataset.delete))
   );
+  productList.querySelectorAll("[data-duplicate]").forEach((btn) =>
+    btn.addEventListener("click", () => duplicateProduct(btn.dataset.duplicate))
+  );
+  productList.querySelectorAll("[data-toggle]").forEach((btn) =>
+    btn.addEventListener("click", () => togglePublish(btn.dataset.toggle))
+  );
+}
+
+function getAdminToken() {
+  return adminToken || tokenInput?.value?.trim() || "";
+}
+
+async function togglePublish(id) {
+  try {
+    const prod = products.find((p) => p.id === id);
+    if (!prod) return;
+    const hidden = prod.badge === "__hidden__";
+    const payload = { badge: hidden ? "" : "__hidden__" };
+    await fetch(`${API_BASE}/products/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-token": getAdminToken(),
+      },
+      body: JSON.stringify(payload),
+    });
+    await fetchProducts();
+  } catch (err) {
+    alert("No se pudo actualizar publicación");
+  }
+}
+
+async function duplicateProduct(id) {
+  try {
+    const prod = products.find((p) => p.id === id);
+    if (!prod) return;
+    const images = Array.isArray(prod.images) ? prod.images : prod.images ? [prod.images] : [];
+    const body = {
+      name: `${prod.name || "Producto"} (copia)`,
+      price: prod.price || 0,
+      size: prod.size || "",
+      type: prod.type || "product",
+      badge: prod.badge === "__hidden__" ? "" : prod.badge || "",
+      description: prod.description || "",
+      images,
+    };
+    await fetch(`${API_BASE}/products`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-token": getAdminToken(),
+      },
+      body: JSON.stringify(body),
+    });
+    await fetchProducts();
+  } catch (err) {
+    alert("No se pudo duplicar el producto");
+  }
 }
 uploadImageBtn?.addEventListener("click", uploadImage);
 createProductBtn?.addEventListener("click", saveProduct);
