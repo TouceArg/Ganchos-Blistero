@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ganchos Blistero · Inicio</title>
+  <title>Ganchos Blisteros · Inicio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -24,10 +24,10 @@
     <div class="promo-bar__dot"></div>
     <div class="promo-bar__ticker">
       <span>Pagos seguros · Mercado Pago</span>
-      <span>Envíos 24/48h</span>
+      <span>Mejor en relación precio-calidad</span>
       <span>+200 reseñas · Mercado Líder Platinum</span>
       <span>Carrito rápido y checkout en 1 click</span>
-      <span>Stock real en línea</span>
+      <span>Envios Flex</span>
     </div>
   </div>
   <header class="nav">
@@ -35,7 +35,7 @@
       <div class="brand">
         <img class="logo-img" src="img/logo/logo%20(2).jpg" alt="Logo Ganchos Blistero">
         <div>
-          <div class="brand-title">Ganchos Blistero</div>
+          <div class="brand-title">Ganchos Blisteros</div>
         </div>
       </div>
       <nav class="nav__links">
@@ -66,24 +66,13 @@
         </div>
         <div class="hero__side">
           <div class="hero__visual reveal" style="--delay:0.05s;">
-            <div class="phone-iso">
-              <div class="phone-iso__body"></div>
-              <div class="phone-iso__content">
-                <div class="phone-iso__row"></div>
-                <div class="phone-iso__row phone-iso__row--sm"></div>
-                <div class="phone-iso__row"></div>
-                <div class="phone-iso__row phone-iso__row--sm"></div>
-                <div class="phone-iso__row"></div>
-              </div>
-              <div class="phone-iso__btn">OK</div>
+            <div class="hero__photo">
+              <img src="C:\Users\touce\OneDrive\Escritorio\Ganchos blistero\Publicidad\DDDD.JPG" alt="Gancho blistero en exhibicion">
             </div>
-            <div class="phone-float">
-              <div class="phone-float__icon">🛒</div>
-              <div class="phone-float__label">Carrito rápido</div>
-            </div>
-            <div class="phone-float phone-float--left">
-              <div class="phone-float__icon">⭐</div>
-              <div class="phone-float__label">+200 reseñas</div>
+            <div class="hero__feature-pills">
+              <div class="hero__pill"><span>&#x1F69A;</span>Env&iacute;os 24/48h</div>
+              <div class="hero__pill"><span>&#x1F4B3;</span>Mercado Pago seguro</div>
+              <div class="hero__pill"><span>&#x1F3EC;</span>Retiro en local</div>
             </div>
           </div>
           <div class="hero__panel reveal" style="--delay:0.12s;">
@@ -91,7 +80,7 @@
               <img class="logo-img logo-img--lg" src="img/logo/logo%20(2).jpg" alt="Logo Ganchos Blistero grande">
               <div>
                 <div class="section__eyebrow" style="margin:0;">Marca oficial</div>
-                <strong style="font-size:18px;">Ganchos Blistero</strong>
+                <strong style="font-size:18px;">Ganchos Blisteros</strong>
               </div>
             </div>
               <div class="hero__grid">
@@ -139,6 +128,18 @@
       </div>
     </section>
 
+    <section class="promo-carousel reveal">
+      <div class="promo-carousel__header">
+        <div>
+          <div class="section__eyebrow">Mirá nuestros productos</div>
+          <h3 class="section__title" style="margin:6px 0 0;">Carrusel de nuestros productos aplicados</h3>
+        </div>
+      </div>
+      <div class="promo-carousel__viewport">
+        <div class="promo-carousel__track" id="promoTrack"></div>
+      </div>
+    </section>
+
     <section class="section reveal" id="destacados">
       <div class="section__header">
         <div>
@@ -174,9 +175,9 @@
           <span></span><span></span><span></span><span></span><span></span><span></span>
         </div>
         <div class="ml-metrics">
-          <div class="ml-metric"><strong>+5 mil</strong>Ventas</div>
-          <div class="ml-metric"><strong>✔</strong>Buena atención</div>
-          <div class="ml-metric"><strong>✔</strong>Entrega a tiempo</div>
+          <div class="ml-metric"><strong class="ml-counter" data-target="5000">+0</strong>Ventas</div>
+          <div class="ml-metric"><strong>&#10003;</strong>Buena atención</div>
+          <div class="ml-metric"><strong>&#10003;</strong>Entrega a tiempo</div>
         </div>
       </div>
       <div class="reviews-board">
@@ -189,11 +190,11 @@
             </div>
           </div>
           <div class="rating-bars">
-            <div class="rating-bar"><span>5 ★</span><div class="rating-bar__track"><div class="rating-bar__fill" style="width:78%;"></div></div><span>78%</span></div>
-            <div class="rating-bar"><span>4 ★</span><div class="rating-bar__track"><div class="rating-bar__fill" style="width:16%;"></div></div><span>16%</span></div>
-            <div class="rating-bar"><span>3 ★</span><div class="rating-bar__track"><div class="rating-bar__fill" style="width:4%;"></div></div><span>4%</span></div>
-            <div class="rating-bar"><span>2 ★</span><div class="rating-bar__track"><div class="rating-bar__fill" style="width:1%;"></div></div><span>1%</span></div>
-            <div class="rating-bar"><span>1 ★</span><div class="rating-bar__track"><div class="rating-bar__fill" style="width:1%;"></div></div><span>1%</span></div>
+            <div class="rating-bar"><span>5 ★</span><div class="rating-bar__track"><div class="rating-bar__fill" data-fill="78"></div></div><span>78%</span></div>
+            <div class="rating-bar"><span>4 ★</span><div class="rating-bar__track"><div class="rating-bar__fill" data-fill="16"></div></div><span>16%</span></div>
+            <div class="rating-bar"><span>3 ★</span><div class="rating-bar__track"><div class="rating-bar__fill" data-fill="4"></div></div><span>4%</span></div>
+            <div class="rating-bar"><span>2 ★</span><div class="rating-bar__track"><div class="rating-bar__fill" data-fill="1"></div></div><span>1%</span></div>
+            <div class="rating-bar"><span>1 ★</span><div class="rating-bar__track"><div class="rating-bar__fill" data-fill="1"></div></div><span>1%</span></div>
           </div>
           <div class="section__subtitle" style="margin:6px 0 0;">Relación precio-calidad · Fácil de instalar · Capacidad · Comodidad</div>
         </div>
@@ -204,7 +205,7 @@
               <span>04 jun. 2025</span>
             </div>
             <div class="review-card__body">
-              <div class="review-card__thumb"><img src="img/logo/logo%20(2).jpg" alt="foto reseña"></div>
+              <div class="review-card__thumb"><img src="C:\Users\touce\OneDrive\Escritorio\Ganchos blistero\Publicidad\D_NQ_NP_2X_903655-MLA97579914179_112025-F.jpg" alt="foto reseña"></div>
               <p class="section__subtitle" style="margin:0;">Excelente. Aguantan el peso sin problemas, no se doblan ni quiebran. Cuando necesite más, los vuelvo a comprar sin dudas.</p>
             </div>
           </div>
@@ -214,7 +215,7 @@
               <span>01 sep. 2024</span>
             </div>
             <div class="review-card__body">
-              <div class="review-card__thumb"><img src="img/logo/logo%20(2).jpg" alt="foto reseña"></div>
+              <div class="review-card__thumb"><img src="C:\Users\touce\OneDrive\Escritorio\Ganchos blistero\Publicidad\botines.jpg" alt="foto reseña"></div>
               <p class="section__subtitle" style="margin:0;">Muy bueno y resistente. Livianos, cómodos y vistosos. Económico y confiable.</p>
             </div>
           </div>
@@ -330,7 +331,7 @@
         <div class="mega-footer__title">Contáctanos</div>
         <div class="mega-footer__list">
           <span>+54 11 3656 0587</span>
-          <span>ventas@ganchosblistero.com</span>
+          <span>ganchosblisterosc4@gmail.com</span>
           <span>Posadas 3159, Villa Libertad, San Martín</span>
         </div>
       </div>
@@ -368,7 +369,7 @@
         <div class="footer__brand">
           <img class="logo-img" src="img/logo/logo%20(2).jpg" alt="Logo Ganchos Blistero">
           <div>
-            <div class="brand-title" style="color:#fff;">Ganchos Blistero</div>
+            <div class="brand-title" style="color:#fff;">Ganchos Blisteros</div>
             <div class="footer__pill">Fijaciones premium</div>
           </div>
         </div>
@@ -377,6 +378,117 @@
     </div>
   </footer>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const mlSection = document.querySelector('.ml-highlight');
+      const reviewsSection = document.querySelector('.reviews-score');
+
+      const promoTrack = document.getElementById('promoTrack');
+      if (promoTrack) {
+        const promoImages = [
+          "Publicidad/botines.jpg",
+          "Publicidad/DDDD.JPG",
+          "Publicidad/D_NQ_NP_2X_858712-MLA81203596172_122024-F.jpg",
+          "Publicidad/D_NQ_NP_2X_903655-MLA97579914179_112025-F.jpg",
+          "Publicidad/FB_IMG_1723635127301.jpg",
+          "Publicidad/jostick.jpg",
+          "Publicidad/Red Modern Email Signature.PNG",
+          "Publicidad/Screenshot_20240812_092641_Instagram.jpg",
+          "Publicidad/STOCK .jpg",
+          "Publicidad/hero/hero.JPG"
+        ];
+        const buildSlides = () => {
+          promoImages.concat(promoImages).forEach((src) => {
+            const slide = document.createElement('div');
+            slide.className = 'promo-slide';
+            const img = document.createElement('img');
+            img.src = encodeURI(src);
+            img.alt = 'Producto Ganchos Blistero';
+            slide.appendChild(img);
+            promoTrack.appendChild(slide);
+          });
+        };
+        buildSlides();
+        let idx = 0;
+        let slideSize = 0;
+        const measure = () => {
+          const first = promoTrack.querySelector('.promo-slide');
+          if (!first) return;
+          const rect = first.getBoundingClientRect();
+          const gap = 12;
+          slideSize = rect.width + gap;
+          promoTrack.style.transform = 'translateX(0)';
+        };
+        measure();
+        window.addEventListener('resize', () => measure());
+        setTimeout(measure, 200);
+        setInterval(() => {
+          if (!slideSize) return;
+          idx += 1;
+          promoTrack.style.transition = 'transform 0.6s ease';
+          promoTrack.style.transform = `translateX(-${idx * slideSize}px)`;
+          if (idx >= promoImages.length) {
+            setTimeout(() => {
+              promoTrack.style.transition = 'none';
+              promoTrack.style.transform = 'translateX(0)';
+              idx = 0;
+            }, 620);
+          }
+        }, 1000);
+      }
+
+      const animateMl = () => {
+        const bars = document.querySelector('.ml-bars');
+        if (bars && !bars.classList.contains('is-animated')) {
+          bars.classList.add('is-animated');
+        }
+        const counter = document.querySelector('.ml-counter');
+        if (counter && !counter.dataset.done) {
+          const target = Number(counter.dataset.target || 0);
+          const duration = 200;
+          const startTime = performance.now();
+          const formatter = new Intl.NumberFormat('es-AR');
+          const tick = (now) => {
+            const progress = Math.min((now - startTime) / duration, 1);
+            const value = Math.floor(target * progress);
+            counter.textContent = `+${formatter.format(value)}`;
+            if (progress < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+          counter.dataset.done = 'true';
+        }
+      };
+
+      const animateRatings = () => {
+        const fills = document.querySelectorAll('.rating-bar__fill');
+        fills.forEach((fill, idx) => {
+          const target = fill.dataset.fill || fill.style.width || '0';
+          fill.style.width = '0%';
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              fill.style.width = `${target}%`;
+            }, idx * 80);
+          });
+        });
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          if (entry.target === mlSection) {
+            animateMl();
+          }
+          if (entry.target === reviewsSection) {
+            animateRatings();
+          }
+          observer.unobserve(entry.target);
+        });
+      }, { threshold: 0.2 });
+
+      if (mlSection) observer.observe(mlSection);
+      if (reviewsSection) observer.observe(reviewsSection);
+    });
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
