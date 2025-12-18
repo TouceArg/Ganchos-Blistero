@@ -135,6 +135,7 @@ const API_FALLBACK = null;
 const CONTACT_URL = "https://ganchos-blistero-production.up.railway.app/api/contacto";
 const ORDER_URL = "https://ganchos-blistero-production.up.railway.app/api/orders";
 const PAY_URL = "https://ganchos-blistero-production.up.railway.app/api/pago/create";
+const CHECKOUT_URL = "https://ganchos-blistero-production.up.railway.app/api/pago/checkout";
 const PAY_STATUS_URL = "https://ganchos-blistero-production.up.railway.app/api/pago/check";
 const nombreInput = document.getElementById("nombre");
 const telInput = document.getElementById("tel");
@@ -616,7 +617,8 @@ async function handleCheckout() {
   };
   try {
     showLoader();
-    const res = await fetch(ORDER_URL, {
+    // Un solo request al backend: crea la orden y la preferencia MP
+    const res = await fetch(CHECKOUT_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -624,22 +626,8 @@ async function handleCheckout() {
     if (!res.ok) throw new Error();
     const data = await res.json();
     if (data.order_id) localStorage.setItem("gb-last-order-id", data.order_id);
-    const payRes = await fetch(PAY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        order_id: data.order_id,
-        email: emailInput?.value || "",
-        total: subtotal + shipping,
-        items: [
-          { title: `Pedido ${data.order_id}`, quantity: 1, unit_price: subtotal + shipping },
-        ],
-      }),
-    });
-    if (!payRes.ok) throw new Error();
-    const payData = await payRes.json();
-    if (payData.init_point) {
-      window.location.href = payData.init_point;
+    if (data.init_point) {
+      window.location.href = data.init_point;
       return;
     }
     alert(`Pedido enviado. ID: ${data.order_id || "pendiente"}`);

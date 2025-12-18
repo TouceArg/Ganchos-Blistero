@@ -86,6 +86,36 @@ async function findPaymentByExternalRef(externalRef) {
   return Array.isArray(data.results) && data.results.length ? data.results[0] : null;
 }
 
+// Crear una orden en la hoja (similar a ordersRoutes) y devolver order_id
+async function createOrder(payload = {}) {
+  const { name, email, phone, total, items, notes, cp, pais, address = {}, pickup } = payload;
+  if (!email || !items || !Array.isArray(items) || items.length === 0) {
+    throw new Error("Faltan email o items");
+  }
+  const doc = await getDoc();
+  const sheet = await ensureOrderSheet(doc);
+  const orderId = `ORD-${Date.now()}`;
+  const row = {
+    order_id: orderId,
+    created_at: new Date().toISOString(),
+    name: name || "",
+    email,
+    phone: phone || "",
+    address_street: address.street || "",
+    address_floor: address.floor || "",
+    address_city: address.city || "",
+    address_state: address.state || "",
+    address_country: address.country || pais || "",
+    address_zip: address.zip || cp || "",
+    total: Number(total || 0),
+    status: "pending",
+    items_json: JSON.stringify(items || []),
+    notes: notes || (pickup ? "Retiro en local" : "Pedido web pendiente de confirmación"),
+  };
+  await sheet.addRow(row);
+  return orderId;
+}
+
 router.post("/create", async (req, res) => {
   if (!ACCESS_TOKEN) return res.status(500).json({ error: "Falta MP_ACCESS_TOKEN" });
   try {
@@ -142,6 +172,69 @@ router.post("/create", async (req, res) => {
   } catch (err) {
     console.error("Error creando preferencia:", err);
     res.status(500).json({ error: "No se pudo crear la preferencia" });
+  }
+});
+
+// Endpoint unificado: crea la orden y la preferencia en un solo llamado
+router.post("/checkout", async (req, res) => {
+  if (!ACCESS_TOKEN) return res.status(500).json({ error: "Falta MP_ACCESS_TOKEN" });
+  try {
+    const { items = [], email, total } = req.body || {};
+    if (!email || !items || !Array.isArray(items) || !items.length) {
+      return res.status(400).json({ error: "Faltan email o items" });
+    }
+    // 1) Crear orden en Sheets
+    const orderId = await createOrder(req.body || {});
+    // 2) Crear preferencia
+    const amount = Number(total || 0);
+    const mpItems =
+      items.length > 0
+        ? items.map((i) => ({
+            title: i.title || i.name || "Item",
+            quantity: Number(i.quantity || i.qty || 1),
+            unit_price: Number(i.unit_price || i.price || 0),
+          }))
+        : [
+            {
+              title: `Pedido ${orderId}`,
+              quantity: 1,
+              unit_price: amount > 0 ? amount : 1,
+            },
+          ];
+    const payload = {
+      items: mpItems,
+      payer: { email },
+      external_reference: orderId,
+      notification_url: "https://ganchos-blistero-production.up.railway.app/api/pago/webhook",
+      back_urls: {
+        success: "https://reliable-medovik-c4f29e.netlify.app/checkout.html?status=success",
+        failure: "https://reliable-medovik-c4f29e.netlify.app/checkout.html?status=failure",
+        pending: "https://reliable-medovik-c4f29e.netlify.app/checkout.html?status=pending",
+      },
+      auto_return: "approved",
+    };
+    const mpRes = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await mpRes.json();
+    if (!mpRes.ok) {
+      console.error("MP create pref error:", data);
+      return res.status(500).json({ error: "No se pudo crear la preferencia" });
+    }
+    res.json({
+      ok: true,
+      order_id: orderId,
+      init_point: data.init_point,
+      sandbox_init_point: data.sandbox_init_point,
+    });
+  } catch (err) {
+    console.error("Checkout unificado error:", err);
+    res.status(500).json({ error: "No se pudo procesar el checkout" });
   }
 });
 
