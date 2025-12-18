@@ -414,10 +414,17 @@ async function uploadImage() {
     body.folder = "ganchos";
     const res = await fetch(`${API_BASE}/upload-image`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-token": adminToken || tokenInput?.value?.trim() || "",
+      },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error();
+    if (!res.ok) {
+      const errText = await res.text();
+      uploadStatus.textContent = errText || "Error subiendo";
+      return null;
+    }
     const data = await res.json();
     uploadStatus.textContent = "Imagen subida";
     return data.url;
