@@ -29,6 +29,10 @@ const tabOrders = document.getElementById("tabOrders");
 const tabProducts = document.getElementById("tabProducts");
 const ordersSection = document.getElementById("ordersSection");
 const productsSection = document.getElementById("productsSection");
+const prevPageBtn = document.getElementById("prevPageBtn");
+const nextPageBtn = document.getElementById("nextPageBtn");
+const pageInfo = document.getElementById("pageInfo");
+const PAGE_SIZE = 10;
 
 let adminToken = localStorage.getItem("gb-admin-token") || "";
 let orders = [];
@@ -37,6 +41,7 @@ let statusChart;
 let dailyChart;
 let topItemsChart;
 let editingId = null;
+let currentPage = 1;
 
 function formatAddress(o) {
   const lines = [];
@@ -66,18 +71,31 @@ function renderOrders() {
   if (!ordersBody) return;
   const term = (searchInput?.value || "").toLowerCase();
   const status = statusFilter?.value || "";
-  const filtered = orders.filter((o) => {
-    const matchTerm =
-      !term ||
-      (o.email || "").toLowerCase().includes(term) ||
-      (o.order_id || "").toLowerCase().includes(term);
-    const matchStatus = !status || o.status === status;
-    return matchTerm && matchStatus;
-  });
+  const filtered = orders
+    .slice()
+    .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+    .filter((o) => {
+      const matchTerm =
+        !term ||
+        (o.email || "").toLowerCase().includes(term) ||
+        (o.order_id || "").toLowerCase().includes(term);
+      const matchStatus = !status || o.status === status;
+      return matchTerm && matchStatus;
+    });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  currentPage = Math.min(currentPage, totalPages);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + PAGE_SIZE);
+
   summaryCount.textContent = `${filtered.length} pedidos`;
-  ordersBody.innerHTML = filtered
+  if (pageInfo) pageInfo.textContent = `Pág ${currentPage}/${totalPages}`;
+  if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
+  if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+
+  ordersBody.innerHTML = pageItems
     .map((o) => {
       const items = safeItems(o.items_json);
+      const isPickup = (o.notes || "").toLowerCase().includes("retiro en local");
       return `
         <tr>
           <td>
@@ -106,6 +124,7 @@ function renderOrders() {
             <button class="btn btn--ghost" data-save="${o.order_id}" style="margin-top:6px;">Guardar</button>
             <button class="btn btn--ghost" data-del="${o.order_id}" style="margin-top:6px;">Eliminar</button>
             <button class="btn btn--ghost" data-label="${o.order_id}" style="margin-top:6px;">Imprimir etiqueta</button>
+            ${isPickup ? '<div class="pill" style="margin-top:6px;background:rgba(59,209,111,0.18);color:#3bd16f;">Retiro en local</div>' : ""}
           </td>
         </tr>
       `;
@@ -363,6 +382,17 @@ if (adminToken) {
   tokenInput.value = adminToken;
   fetchOrders();
 }
+
+prevPageBtn?.addEventListener("click", () => {
+  if (currentPage > 1) {
+    currentPage -= 1;
+    renderOrders();
+  }
+});
+nextPageBtn?.addEventListener("click", () => {
+  currentPage += 1;
+  renderOrders();
+});
 
 // ---------- Productos ----------
 async function uploadImage() {
