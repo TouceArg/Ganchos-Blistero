@@ -86,6 +86,40 @@ async function findPaymentByExternalRef(externalRef) {
   return Array.isArray(data.results) && data.results.length ? data.results[0] : null;
 }
 
+function buildShipments(body = {}) {
+  const addr = body.address || {};
+  const zip = addr.zip || body.cp || "";
+  if (!zip) return null;
+  const pickup = !!body.pickup;
+  const streetName = String(addr.street || "").trim();
+  const streetNumber = Number(addr.street_number || addr.number || addr.num || 0) || 1;
+  const items = Array.isArray(body.items) ? body.items : [];
+  const has12 = items.some((i) => String(i.size || "").includes("12"));
+  const length = has12 ? 30 : 20; // cm
+  const width = 15; // cm
+  const height = 8; // cm
+  const totalWeightKg = Math.max(
+    0.006,
+    items.reduce((acc, i) => acc + (Number(i.quantity || i.qty || 1) * 0.006), 0)
+  ); // 6g por unidad
+  const dimensions = `${length}x${width}x${height},${totalWeightKg.toFixed(3)}`;
+  return {
+    mode: "me2",
+    local_pickup: pickup,
+    receiver_address: {
+      zip_code: String(zip),
+      street_name: streetName || "Sin calle",
+      street_number: streetNumber,
+      floor: addr.floor || "",
+      apartment: addr.apartment || "",
+      city_name: addr.city || "",
+      state_name: addr.state || "",
+      country_name: addr.country || body.pais || "",
+    },
+    dimensions,
+  };
+}
+
 // Crear una orden en la hoja (similar a ordersRoutes) y devolver order_id
 async function createOrder(payload = {}) {
   const { name, email, phone, total, items, notes, cp, pais, address = {}, pickup } = payload;
@@ -122,6 +156,7 @@ router.post("/create", async (req, res) => {
     const { order_id, items = [], email, total } = req.body || {};
     if (!order_id || !email) return res.status(400).json({ error: "Faltan order_id o email" });
     const amount = Number(total || 0);
+    const shipments = buildShipments(req.body || {});
     const mpItems =
       items.length > 0
         ? items.map((i) => ({
@@ -149,6 +184,7 @@ router.post("/create", async (req, res) => {
       },
       auto_return: "approved",
     };
+    if (shipments) payload.shipments = shipments;
 
     const mpRes = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -187,6 +223,7 @@ router.post("/checkout", async (req, res) => {
     const orderId = await createOrder(req.body || {});
     // 2) Crear preferencia
     const amount = Number(total || 0);
+    const shipments = buildShipments(req.body || {});
     const mpItems =
       items.length > 0
         ? items.map((i) => ({
@@ -213,6 +250,7 @@ router.post("/checkout", async (req, res) => {
       },
       auto_return: "approved",
     };
+    if (shipments) payload.shipments = shipments;
     const mpRes = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
       headers: {

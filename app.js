@@ -599,7 +599,8 @@ async function handleCheckout() {
     cp: cpInput?.value || "",
     pais: paisSelect?.value || "",
     address: {
-      street: `${calleInput?.value || ""} ${numeroInput?.value || ""}`.trim(),
+      street: `${calleInput?.value || ""}`.trim(),
+      number: `${numeroInput?.value || ""}`.trim(),
       floor: pisoInput?.value || "",
       city: ciudadInput?.value || "",
       state: provinciaInput?.value || "",
