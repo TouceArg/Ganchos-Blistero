@@ -104,6 +104,7 @@ function renderOrders() {
           <td>
             <textarea rows="2" data-notes="${o.order_id}" class="notes-input">${o.notes || ""}</textarea>
             <button class="btn btn--ghost" data-save="${o.order_id}" style="margin-top:6px;">Guardar</button>
+            <button class="btn btn--ghost" data-del="${o.order_id}" style="margin-top:6px;">Eliminar</button>
           </td>
         </tr>
       `;
@@ -154,6 +155,13 @@ function wireActions() {
       await updateOrder(id, { notes });
     });
   });
+  document.querySelectorAll("[data-del]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.del;
+      if (!confirm(`¿Eliminar la orden ${id}?`)) return;
+      await deleteOrder(id);
+    });
+  });
 }
 
 async function updateOrder(id, payload) {
@@ -170,6 +178,22 @@ async function updateOrder(id, payload) {
     await fetchOrders();
   } catch (err) {
     alert("Error guardando cambios");
+  }
+}
+
+async function deleteOrder(id) {
+  try {
+    const res = await fetch(`${API_BASE}/orders/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-token": adminToken,
+      },
+    });
+    if (!res.ok) throw new Error();
+    await fetchOrders();
+  } catch (err) {
+    alert("No se pudo eliminar la orden");
   }
 }
 

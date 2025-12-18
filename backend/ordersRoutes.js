@@ -206,4 +206,25 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
+// Eliminar una orden
+router.delete("/:id", async (req, res) => {
+  if (!isAdmin(req)) return res.status(401).json({ error: "No autorizado" });
+  const { id } = req.params;
+  try {
+    const doc = await getDoc();
+    const sheet = await ensureOrderSheet(doc);
+    const rows = await sheet.getRows();
+    const row = rows.find((r) => {
+      const get = typeof r.get === "function" ? r.get.bind(r) : r;
+      return (get("order_id") || get.order_id) === id;
+    });
+    if (!row) return res.status(404).json({ error: "Orden no encontrada" });
+    await row.delete();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Error eliminando orden:", err);
+    res.status(500).json({ error: "No se pudo eliminar la orden" });
+  }
+});
+
 module.exports = router;
