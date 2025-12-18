@@ -101,15 +101,28 @@ function buildShipments(body = {}) {
   const streetName = String(addr.street || "").trim();
   const streetNumber = Number(addr.street_number || addr.number || addr.num || 0) || 1;
   const items = Array.isArray(body.items) ? body.items : [];
-  const has12 = items.some((i) => String(i.size || "").includes("12"));
-  const length = has12 ? 30 : 20; // cm
-  const width = 15; // cm
-  const height = 8; // cm
-  const totalWeightKg = Math.max(
-    0.006,
-    items.reduce((acc, i) => acc + (Number(i.quantity || i.qty || 1) * 0.006), 0)
-  ); // 6g por unidad
-  const dimensions = `${length}x${width}x${height},${totalWeightKg.toFixed(3)}`;
+  // Tomamos medidas/peso de cada item si viene; si no, usamos defaults según size
+  let maxL = 0,
+    maxW = 0,
+    maxH = 0,
+    totalWeightKg = 0;
+  items.forEach((i) => {
+    const qty = Number(i.quantity || i.qty || 1);
+    const has12 = String(i.size || "").includes("12");
+    const l = Number(i.length_cm || (has12 ? 30 : 20)) || (has12 ? 30 : 20);
+    const w = Number(i.width_cm || 15) || 15;
+    const h = Number(i.height_cm || 8) || 8;
+    const wKg = Number(i.weight_kg || 0.006) || 0.006; // 6g default
+    maxL = Math.max(maxL, l);
+    maxW = Math.max(maxW, w);
+    maxH = Math.max(maxH, h);
+    totalWeightKg += wKg * qty;
+  });
+  if (maxL === 0) maxL = 20;
+  if (maxW === 0) maxW = 15;
+  if (maxH === 0) maxH = 8;
+  if (totalWeightKg <= 0) totalWeightKg = 0.006;
+  const dimensions = `${maxL}x${maxW}x${maxH},${totalWeightKg.toFixed(3)}`;
   return {
     mode: "me2",
     local_pickup: pickup,
