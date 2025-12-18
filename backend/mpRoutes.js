@@ -61,6 +61,20 @@ async function updateOrderStatus(orderId, status, notes) {
   return true;
 }
 
+async function findPaymentByExternalRef(externalRef) {
+  if (!externalRef) return null;
+  const searchRes = await fetch(
+    `https://api.mercadopago.com/v1/payments/search?external_reference=${encodeURIComponent(externalRef)}`,
+    { headers: { Authorization: `Bearer ${ACCESS_TOKEN}` } }
+  );
+  const data = await searchRes.json();
+  if (!searchRes.ok) {
+    console.error("MP search error:", data);
+    return null;
+  }
+  return Array.isArray(data.results) && data.results.length ? data.results[0] : null;
+}
+
 router.post("/create", async (req, res) => {
   if (!ACCESS_TOKEN) return res.status(500).json({ error: "Falta MP_ACCESS_TOKEN" });
   try {
@@ -126,6 +140,7 @@ router.post("/webhook", async (req, res) => {
   if (!paymentId) return res.sendStatus(400);
   if (topic && topic !== "payment") return res.sendStatus(200);
   try {
+    console.log("Webhook recibido", { paymentId, topic, query: req.query, body: req.body });
     const payRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
       headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
     });
@@ -136,7 +151,12 @@ router.post("/webhook", async (req, res) => {
     }
     const orderId = info.external_reference;
     // Unificamos con los estados usados en admin (pending/approved/cancelled)
-    const status = info.status === "approved" ? "approved" : info.status === "rejected" ? "cancelled" : "pending";
+    const status =
+      info.status === "approved"
+        ? "approved"
+        : info.status === "rejected" || info.status_detail === "cc_rejected_other_reason"
+        ? "cancelled"
+        : "pending";
     if (orderId) {
       await updateOrderStatus(orderId, status, `MP payment ${paymentId} status ${info.status}`);
     }
@@ -144,6 +164,26 @@ router.post("/webhook", async (req, res) => {
   } catch (err) {
     console.error("Webhook error:", err);
     res.sendStatus(200);
+  }
+});
+
+// Endpoint para revalidar estado por external_reference (fallback si el webhook no llegó)
+router.get("/check/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+  try {
+    const payment = await findPaymentByExternalRef(orderId);
+    if (!payment) return res.status(404).json({ error: "No se encontró pago" });
+    const status =
+      payment.status === "approved"
+        ? "approved"
+        : payment.status === "rejected" || payment.status_detail === "cc_rejected_other_reason"
+        ? "cancelled"
+        : "pending";
+    await updateOrderStatus(orderId, status, `Sync MP search status ${payment.status}`);
+    res.json({ ok: true, status, id: payment.id });
+  } catch (err) {
+    console.error("Error en check status:", err);
+    res.status(500).json({ error: "No se pudo consultar estado" });
   }
 });
 

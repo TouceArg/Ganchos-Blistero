@@ -135,6 +135,7 @@ const API_FALLBACK = null;
 const CONTACT_URL = "https://ganchos-blistero-production.up.railway.app/api/contacto";
 const ORDER_URL = "https://ganchos-blistero-production.up.railway.app/api/orders";
 const PAY_URL = "https://ganchos-blistero-production.up.railway.app/api/pago/create";
+const PAY_STATUS_URL = "https://ganchos-blistero-production.up.railway.app/api/pago/check";
 const nombreInput = document.getElementById("nombre");
 const telInput = document.getElementById("tel");
 const calleInput = document.getElementById("calle");
@@ -561,6 +562,21 @@ function closeProductModal() {
   productModal.classList.remove("modal--open");
 }
 
+async function revalidatePaymentStatus() {
+  const params = new URLSearchParams(window.location.search || "");
+  const statusParam = params.get("status");
+  const lastOrderId = localStorage.getItem("gb-last-order-id");
+  // Solo corremos en checkout (cuando MP devuelve a checkout.html con status)
+  if (!statusParam || !lastOrderId) return;
+  try {
+    // No bloqueamos la UI; solo intentamos sincronizar estado si el webhook no llegó.
+    await fetch(`${PAY_STATUS_URL}/${lastOrderId}`).catch(() => {});
+  } finally {
+    // Limpiamos para no reintentar en futuras visitas
+    localStorage.removeItem("gb-last-order-id");
+  }
+}
+
 async function createPreference(items) {
   return null;
 }
@@ -610,6 +626,7 @@ async function handleCheckout() {
     });
     if (!res.ok) throw new Error();
     const data = await res.json();
+    if (data.order_id) localStorage.setItem("gb-last-order-id", data.order_id);
     const payRes = await fetch(PAY_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -762,6 +779,7 @@ document.addEventListener("DOMContentLoaded", () => {
     brandEl.style.cursor = "pointer";
     brandEl.addEventListener("click", () => (location.href = "index.html"));
   }
+  revalidatePaymentStatus();
 });
 
 async function fetchCatalog() {
