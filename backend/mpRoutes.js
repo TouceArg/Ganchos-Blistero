@@ -62,9 +62,12 @@ async function updateOrderStatus(orderId, status, notes) {
     const get = typeof r.get === "function" ? r.get.bind(r) : r;
     return (get("order_id") || get.order_id) === orderId;
   });
-  if (!row) return false;
-  row.status = status || row.status;
-  if (notes) row.notes = notes;
+  if (!row) {
+    console.error("No se encontró orden para actualizar estado", orderId);
+    return false;
+  }
+  if (status) row.set("status", status);
+  if (notes) row.set("notes", notes);
   await row.save();
   return true;
 }

@@ -196,8 +196,8 @@ router.patch("/:id", async (req, res) => {
       return (get("order_id") || get.order_id) === id;
     });
     if (!row) return res.status(404).json({ error: "Orden no encontrada" });
-    if (status) row.status = status;
-    if (typeof notes === "string") row.notes = notes;
+    if (status) row.set("status", status);
+    if (typeof notes === "string") row.set("notes", notes);
     await row.save();
     res.json({ ok: true });
   } catch (err) {
