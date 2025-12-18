@@ -392,7 +392,7 @@ function renderCart() {
   const subtotal = items.reduce((acc, i) => acc + i.qty * i.price, 0);
   const shipping = getShipping(subtotal);
   subtotalText.textContent = formatCurrency(subtotal);
-  shippingText.textContent = shipping === 0 ? "Gratis" : formatCurrency(shipping);
+  shippingText.textContent = shipping === 0 ? "Calculado en MP" : formatCurrency(shipping);
   totalText.textContent = formatCurrency(subtotal + shipping);
 }
 
@@ -419,7 +419,7 @@ function renderCheckoutSummary() {
   const shipping = getShipping(subtotal);
   checkoutTotals.innerHTML = `
     <div class="totals__row"><span>Subtotal</span><strong>${formatCurrency(subtotal)}</strong></div>
-    <div class="totals__row"><span>Envío</span><strong>${shipping === 0 ? "Gratis" : formatCurrency(shipping)}</strong></div>
+    <div class="totals__row"><span>Envío</span><strong>${shipping === 0 ? "Calculado en MP" : formatCurrency(shipping)}</strong></div>
     <div class="totals__row totals__row--highlight"><span>Total</span><strong>${formatCurrency(subtotal + shipping)}</strong></div>
   `;
   checkoutSummary.querySelectorAll("[data-qty]").forEach(btn => {
