@@ -216,7 +216,7 @@ button:active { transform: translateY(0); }
 .hero {
   position: relative;
   overflow: hidden;
-  padding: 96px 20px 88px;
+  padding: 80px 20px 70px;
   width: 100%;
 }
 .hero::before {
@@ -231,17 +231,18 @@ button:active { transform: translateY(0); }
 .hero__inner {
   position: relative;
   z-index: 1;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 28px;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 22px;
   align-items: center;
 }
 .hero__side {
   display: grid;
   gap: 18px;
   align-items: start;
+  align-self: stretch;
 }
 .hero__visual {
   position: relative;
@@ -1194,6 +1195,16 @@ iframe {
   text-decoration: none;
   box-shadow: 0 12px 28px rgba(18, 18, 24, 0.14);
   z-index: 95;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.floating-chat::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='white'%3E%3Cpath d='M16 3c-7.168 0-13 5.832-13 13 0 2.294.588 4.488 1.71 6.45L3 29l6.68-1.74A12.86 12.86 0 0 0 16 29c7.168 0 13-5.832 13-13S23.168 3 16 3zm0 24a11.07 11.07 0 0 1-5.627-1.57l-.401-.238-3.964 1.032 1.058-3.866-.26-.395A10.98 10.98 0 0 1 5 16c0-6.065 4.935-11 11-11s11 4.935 11 11-4.935 11-11 11zm6.154-8.356c-.337-.168-1.986-.981-2.294-1.092-.308-.112-.533-.168-.758.168-.224.336-.87 1.092-1.068 1.316-.196.224-.392.252-.728.084-.336-.168-1.42-.522-2.704-1.664-.999-.891-1.674-1.989-1.87-2.325-.196-.336-.021-.518.147-.686.151-.15.336-.392.504-.588.168-.196.224-.336.336-.56.112-.224.056-.42-.028-.588-.084-.168-.758-1.834-1.04-2.513-.274-.658-.553-.568-.758-.578-.196-.01-.42-.012-.644-.012-.224 0-.588.084-.896.42-.308.336-1.176 1.15-1.176 2.8 0 1.65 1.203 3.243 1.37 3.468.168.224 2.364 3.606 5.73 5.05.801.345 1.425.551 1.912.706.804.255 1.538.219 2.118.133.646-.096 1.986-.81 2.268-1.593.282-.784.282-1.455.196-1.593-.084-.14-.308-.224-.644-.392z'/%3E%3C/svg%3E") center/contain no-repeat;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
 }
 .floating-cart__icon {
   width: 32px;
