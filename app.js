@@ -563,11 +563,8 @@ function closeProductModal() {
 }
 
 async function revalidatePaymentStatus() {
-  const params = new URLSearchParams(window.location.search || "");
-  const statusParam = params.get("status");
   const lastOrderId = localStorage.getItem("gb-last-order-id");
-  // Solo corremos en checkout (cuando MP devuelve a checkout.html con status)
-  if (!statusParam || !lastOrderId) return;
+  if (!lastOrderId) return;
   try {
     // No bloqueamos la UI; solo intentamos sincronizar estado si el webhook no llegó.
     await fetch(`${PAY_STATUS_URL}/${lastOrderId}`).catch(() => {});

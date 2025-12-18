@@ -143,10 +143,27 @@ router.post("/create", async (req, res) => {
 });
 
 router.post("/webhook", async (req, res) => {
-  const paymentId = req.query.id || req.body?.data?.id || req.body?.id;
-  const topic = req.query.topic || req.body?.type;
+  let paymentId = req.query.id || req.body?.data?.id || req.body?.id;
+  const topic = req.query.topic || req.body?.type || req.body?.topic;
+  // Si viene merchant_order, buscamos el payment id
+  if (!paymentId && topic === "merchant_order") {
+    const moId = req.query.id || req.body?.id;
+    if (moId) {
+      try {
+        const moRes = await fetch(`https://api.mercadopago.com/merchant_orders/${moId}`, {
+          headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+        });
+        const mo = await moRes.json();
+        if (Array.isArray(mo.payments) && mo.payments.length) {
+          paymentId = mo.payments[0].id;
+        }
+      } catch (e) {
+        console.error("Error leyendo merchant_order", e);
+      }
+    }
+  }
   if (!paymentId) return res.sendStatus(400);
-  if (topic && topic !== "payment") return res.sendStatus(200);
+  if (topic && topic !== "payment" && topic !== "merchant_order") return res.sendStatus(200);
   try {
     console.log("Webhook recibido", { paymentId, topic, query: req.query, body: req.body });
     const payRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
