@@ -68,7 +68,11 @@ async function updateOrderStatus(orderId, status, notes) {
     return false;
   }
   if (status) row.set("status", status);
-  if (notes) row.set("notes", notes);
+  if (notes) {
+    const prev = row.get("notes") || row.notes || "";
+    const combined = prev ? `${prev} | ${notes}` : notes;
+    row.set("notes", combined);
+  }
   await row.save();
   return true;
 }
@@ -336,8 +340,14 @@ router.post("/webhook", async (req, res) => {
         : info.status === "rejected" || info.status_detail === "cc_rejected_other_reason"
         ? "cancelled"
         : "pending";
+    const shipmentId =
+      info?.shipping?.id ||
+      info?.shipments?.id ||
+      (info?.shipping && info.shipping?.shipments_id) ||
+      "";
+    const extraNote = `MP payment ${paymentId} status ${info.status} detail ${info.status_detail || ""} shipment ${shipmentId || "n/a"}`;
     if (orderId) {
-      await updateOrderStatus(orderId, status, `MP payment ${paymentId} status ${info.status}`);
+      await updateOrderStatus(orderId, status, extraNote);
     }
     res.sendStatus(200);
   } catch (err) {

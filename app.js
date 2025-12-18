@@ -581,7 +581,7 @@ async function createPreference(items) {
 
 async function handleCheckout() {
   if (!isCheckoutReady()) {
-    alert("Completa email y código postal antes de enviar.");
+    alert("Completa email, teléfono, calle y número, y código postal antes de enviar.");
     return;
   }
   const items = Object.values(cart);
