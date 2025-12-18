@@ -105,6 +105,7 @@ function renderOrders() {
             <textarea rows="2" data-notes="${o.order_id}" class="notes-input">${o.notes || ""}</textarea>
             <button class="btn btn--ghost" data-save="${o.order_id}" style="margin-top:6px;">Guardar</button>
             <button class="btn btn--ghost" data-del="${o.order_id}" style="margin-top:6px;">Eliminar</button>
+            <button class="btn btn--ghost" data-label="${o.order_id}" style="margin-top:6px;">Imprimir etiqueta</button>
           </td>
         </tr>
       `;
@@ -162,6 +163,12 @@ function wireActions() {
       await deleteOrder(id);
     });
   });
+  document.querySelectorAll("[data-label]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.label;
+      await openLabel(id);
+    });
+  });
 }
 
 async function updateOrder(id, payload) {
@@ -194,6 +201,21 @@ async function deleteOrder(id) {
     await fetchOrders();
   } catch (err) {
     alert("No se pudo eliminar la orden");
+  }
+}
+
+async function openLabel(id) {
+  try {
+    const res = await fetch(`${API_BASE}/pago/label/${id}?token=${adminToken || ""}`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    if (data?.url) {
+      window.open(data.url, "_blank");
+    } else {
+      alert("No se encontró etiqueta para esta orden.");
+    }
+  } catch (err) {
+    alert("No se pudo obtener la etiqueta.");
   }
 }
 

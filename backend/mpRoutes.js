@@ -8,6 +8,7 @@ const router = Router();
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || "";
 const ORDER_SHEET_NAME = process.env.ORDER_SHEET_NAME || "orders";
 const DOC_CACHE_TTL_MS = 5 * 60 * 1000;
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
 
 let cachedDoc = null;
 let cachedDocAt = 0;
@@ -84,6 +85,12 @@ async function findPaymentByExternalRef(externalRef) {
     return null;
   }
   return Array.isArray(data.results) && data.results.length ? data.results[0] : null;
+}
+
+function isAdmin(req) {
+  if (!ADMIN_TOKEN) return true;
+  const t = req.headers["x-admin-token"] || req.query.token;
+  return t === ADMIN_TOKEN;
 }
 
 function buildShipments(body = {}) {
@@ -343,6 +350,26 @@ router.get("/check/:orderId", async (req, res) => {
   } catch (err) {
     console.error("Error en check status:", err);
     res.status(500).json({ error: "No se pudo consultar estado" });
+  }
+});
+
+// Devolver URL de etiqueta de envío (ME2) para imprimir desde admin
+router.get("/label/:orderId", async (req, res) => {
+  if (!isAdmin(req)) return res.status(401).json({ error: "No autorizado" });
+  const { orderId } = req.params;
+  try {
+    const payment = await findPaymentByExternalRef(orderId);
+    if (!payment) return res.status(404).json({ error: "No se encontró pago" });
+    const shipmentId =
+      payment?.shipping?.id ||
+      payment?.shipments?.id ||
+      (payment?.shipping && payment.shipping?.shipments_id);
+    if (!shipmentId) return res.status(404).json({ error: "No hay envío ME2 asociado" });
+    const labelUrl = `https://api.mercadopago.com/shipment_labels?shipment_ids=${shipmentId}&access_token=${ACCESS_TOKEN}`;
+    res.json({ ok: true, shipment_id: shipmentId, payment_id: payment.id, url: labelUrl });
+  } catch (err) {
+    console.error("Error obteniendo etiqueta:", err);
+    res.status(500).json({ error: "No se pudo obtener la etiqueta" });
   }
 });
 
