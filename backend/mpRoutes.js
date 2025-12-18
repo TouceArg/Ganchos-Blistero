@@ -7,8 +7,14 @@ const router = Router();
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || "";
 const ORDER_SHEET_NAME = process.env.ORDER_SHEET_NAME || "orders";
+const DOC_CACHE_TTL_MS = 5 * 60 * 1000;
+
+let cachedDoc = null;
+let cachedDocAt = 0;
 
 async function getDoc() {
+  const now = Date.now();
+  if (cachedDoc && now - cachedDocAt < DOC_CACHE_TTL_MS) return cachedDoc;
   const auth = new GoogleAuth({
     credentials: {
       client_email: process.env.GS_CLIENT_EMAIL,
@@ -18,7 +24,9 @@ async function getDoc() {
   });
   const doc = new GoogleSpreadsheet(process.env.SHEET_ID, auth);
   await doc.loadInfo();
-  return doc;
+  cachedDoc = doc;
+  cachedDocAt = now;
+  return cachedDoc;
 }
 
 async function ensureOrderSheet(doc) {
