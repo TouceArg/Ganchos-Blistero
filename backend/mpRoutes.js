@@ -135,7 +135,8 @@ router.post("/webhook", async (req, res) => {
       return res.sendStatus(200);
     }
     const orderId = info.external_reference;
-    const status = info.status === "approved" ? "pagado" : info.status === "rejected" ? "cancelled" : "pending";
+    // Unificamos con los estados usados en admin (pending/approved/cancelled)
+    const status = info.status === "approved" ? "approved" : info.status === "rejected" ? "cancelled" : "pending";
     if (orderId) {
       await updateOrderStatus(orderId, status, `MP payment ${paymentId} status ${info.status}`);
     }

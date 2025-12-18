@@ -12,8 +12,9 @@ const cloudinary = require("cloudinary").v2;
 
 const app = express();
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Aumentamos el límite de payload para soportar imágenes base64 más pesadas desde el panel admin.
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 // Supabase client
 const SUPABASE_URL = process.env.SUPABASE_URL;

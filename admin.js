@@ -94,7 +94,7 @@ function renderOrders() {
           <td>
             <select data-id="${o.order_id}" class="status-select">
               <option value="pending" ${o.status === "pending" ? "selected" : ""}>Pendiente</option>
-              <option value="approved" ${o.status === "approved" ? "selected" : ""}>Cerrado</option>
+              <option value="approved" ${o.status === "approved" ? "selected" : ""}>Pago aprobado</option>
               <option value="cancelled" ${o.status === "cancelled" ? "selected" : ""}>Cancelado</option>
             </select>
           </td>
