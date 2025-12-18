@@ -100,10 +100,14 @@ function isAdmin(req) {
 function buildShipments(body = {}) {
   const addr = body.address || {};
   const zip = addr.zip || body.cp || "";
-  if (!zip) return null;
   const pickup = !!body.pickup;
   const streetName = String(addr.street || "").trim();
   const streetNumber = Number(addr.street_number || addr.number || addr.num || 0) || 1;
+  if (pickup) return null;
+  if (!zip || !streetName || !streetNumber) return null;
+  const city = String(addr.city || "").trim();
+  const state = String(addr.state || "").trim();
+  const country = String(addr.country || "").trim();
   const items = Array.isArray(body.items) ? body.items : [];
   // Tomamos medidas/peso de cada item si viene; si no, usamos defaults según size
   let maxL = 0,
@@ -133,11 +137,11 @@ function buildShipments(body = {}) {
     receiver_address: {
       zip_code: String(zip),
       street_name: streetName || "Sin calle",
-      street_number: streetNumber,
+      street_number: streetNumber || 1,
       floor: addr.floor || "",
       apartment: addr.apartment || "",
-      city_name: addr.city || "",
-      state_name: addr.state || "",
+      city_name: addr.city || city || "",
+      state_name: addr.state || state || "",
       country_name: addr.country || body.pais || "",
     },
     dimensions,
@@ -397,3 +401,4 @@ router.get("/label/:orderId", async (req, res) => {
 });
 
 module.exports = router;
+
