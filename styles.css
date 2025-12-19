@@ -848,6 +848,26 @@ button:active { transform: translateY(0); }
   background: #f8f9fb;
   padding: 2px;
 }
+
+/* Responsive overrides */
+@media (max-width: 768px) {
+  .promo-bar { display: none; }
+  .nav__inner { padding: 10px 12px; gap: 12px; }
+  .nav__cta button { padding: 10px 14px; font-size: 14px; }
+  .logo-img { width: 60px; height: 60px; }
+  .hero { padding: 70px 14px 60px; }
+  .hero__inner { grid-template-columns: 1fr; gap: 16px; }
+  .hero__visual { min-height: 200px; padding: 14px; }
+  .hero__photo { aspect-ratio: 4 / 3; }
+  .hero__panel { margin-top: 10px; }
+  .hero__panel .hero__grid { grid-template-columns: 1fr; }
+  .promo-carousel { padding: 8px 10px 0; margin-bottom: 30px; }
+  .promo-carousel__viewport { padding: 12px; min-height: 180px; }
+  .promo-slide { min-width: 200px; max-width: 260px; height: 150px; }
+  .card__image { height: 200px; }
+  .checkout-grid { grid-template-columns: 1fr; }
+  .checkout-summary { position: relative; top: auto; }
+}
 .card__title {
   display: -webkit-box;
   -webkit-line-clamp: 2;
