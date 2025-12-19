@@ -113,24 +113,26 @@ function buildShipments(body = {}) {
   let maxL = 0,
     maxW = 0,
     maxH = 0,
-    totalWeightKg = 0;
+    totalWeightGr = 0;
   items.forEach((i) => {
     const qty = Number(i.quantity || i.qty || 1);
     const has12 = String(i.size || "").includes("12");
     const l = Number(i.length_cm || (has12 ? 30 : 20)) || (has12 ? 30 : 20);
     const w = Number(i.width_cm || 15) || 15;
     const h = Number(i.height_cm || 8) || 8;
-    const wKg = Number(i.weight_kg || 0.006) || 0.006; // 6g default
+    const wKg = Number(i.weight_kg) || 0;
+    const wGr = Number(i.weight_g) || (wKg ? wKg * 1000 : 200); // default 200g
     maxL = Math.max(maxL, l);
     maxW = Math.max(maxW, w);
     maxH = Math.max(maxH, h);
-    totalWeightKg += wKg * qty;
+    totalWeightGr += wGr * qty;
   });
   if (maxL === 0) maxL = 20;
   if (maxW === 0) maxW = 15;
   if (maxH === 0) maxH = 8;
-  if (totalWeightKg <= 0.2) totalWeightKg = 0.2; // mínimo 200g para ME2
-  const dimensions = `${maxL}x${maxW}x${maxH},${totalWeightKg.toFixed(3)}`;
+  if (typeof totalWeightGr === "undefined" || totalWeightGr <= 0) totalWeightGr = 200;
+  if (totalWeightGr < 200) totalWeightGr = 200; // minimo 200g para ME2
+  const dimensions = `${maxL}x${maxW}x${maxH},${Math.round(totalWeightGr)}`;
   return {
     mode: "me2",
     local_pickup: pickup,
@@ -401,4 +403,5 @@ router.get("/label/:orderId", async (req, res) => {
 });
 
 module.exports = router;
+
 
