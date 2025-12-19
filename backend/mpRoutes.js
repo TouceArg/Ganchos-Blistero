@@ -99,7 +99,7 @@ function isAdmin(req) {
 
 function buildShipments(body = {}) {
   const addr = body.address || {};
-  const zip = addr.zip || body.cp || "";
+  const zip = (addr.zip || body.cp || "").toString().trim();
   const pickup = !!body.pickup;
   const streetName = String(addr.street || "").trim();
   const streetNumber = Number(addr.street_number || addr.number || addr.num || 0) || 1;
@@ -129,7 +129,7 @@ function buildShipments(body = {}) {
   if (maxL === 0) maxL = 20;
   if (maxW === 0) maxW = 15;
   if (maxH === 0) maxH = 8;
-  if (totalWeightKg <= 0) totalWeightKg = 0.006;
+  if (totalWeightKg <= 0.2) totalWeightKg = 0.2; // mínimo 200g para ME2
   const dimensions = `${maxL}x${maxW}x${maxH},${totalWeightKg.toFixed(3)}`;
   return {
     mode: "me2",
@@ -142,7 +142,7 @@ function buildShipments(body = {}) {
       apartment: addr.apartment || "",
       city_name: addr.city || city || "",
       state_name: addr.state || state || "",
-      country_name: addr.country || body.pais || "",
+      country_name: addr.country || body.pais || "AR",
     },
     dimensions,
   };
