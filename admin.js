@@ -21,6 +21,10 @@ const pDescription = document.getElementById("pDescription");
 const pImageUrl = document.getElementById("pImageUrl");
 const pImageFile = document.getElementById("pImageFile");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
+const pWeight = document.getElementById("pWeight");
+const pLength = document.getElementById("pLength");
+const pWidth = document.getElementById("pWidth");
+const pHeight = document.getElementById("pHeight");
 const createProductBtn = document.getElementById("createProductBtn");
 const uploadStatus = document.getElementById("uploadStatus");
 const productMsg = document.getElementById("productMsg");
@@ -453,6 +457,18 @@ async function saveProduct() {
     const type = pType?.value || "product";
     const badge = pBadge?.value.trim();
     const description = pDescription?.value.trim();
+    const weight = Number(pWeight?.value || 0);
+    const length = Number(pLength?.value || 0);
+    const width = Number(pWidth?.value || 0);
+    const height = Number(pHeight?.value || 0);
+    if (weight < 0 || length < 0 || width < 0 || height < 0) {
+      alert("Peso y dimensiones deben ser positivos.");
+      return;
+    }
+    if (weight > 100000 || length > 200 || width > 200 || height > 200) {
+      alert("Revisa peso/dimensiones: los valores son demasiado grandes.");
+      return;
+    }
     if (!name || !price || !size) {
       alert("Nombre, precio y medida son obligatorios.");
       return;
@@ -471,6 +487,10 @@ async function saveProduct() {
       description,
       images: imageUrl ? [imageUrl] : [],
     };
+    if (weight) payload.weight_g = weight;
+    if (length) payload.length_cm = length;
+    if (width) payload.width_cm = width;
+    if (height) payload.height_cm = height;
     const url = editingId ? `${API_BASE}/products/${editingId}` : `${API_BASE}/products`;
     const method = editingId ? "PATCH" : "POST";
     const res = await fetch(url, {
@@ -499,6 +519,10 @@ function resetProductForm() {
   pBadge.value = "";
   pDescription.value = "";
   pImageUrl.value = "";
+  if (pWeight) pWeight.value = "";
+  if (pLength) pLength.value = "";
+  if (pWidth) pWidth.value = "";
+  if (pHeight) pHeight.value = "";
   if (pImageFile) pImageFile.value = "";
   setTimeout(() => (productMsg.style.display = "none"), 2000);
 }
@@ -528,6 +552,10 @@ function startEditProduct(id) {
   pBadge.value = p.badge || "";
   pDescription.value = p.description || "";
   pImageUrl.value = Array.isArray(p.images) && p.images[0] ? p.images[0] : "";
+  if (pWeight) pWeight.value = p.weight_g || "";
+  if (pLength) pLength.value = p.length_cm || "";
+  if (pWidth) pWidth.value = p.width_cm || "";
+  if (pHeight) pHeight.value = p.height_cm || "";
   createProductBtn.textContent = "Actualizar producto";
   productMsg.style.display = "inline-flex";
   productMsg.textContent = "Editando producto";
@@ -555,13 +583,17 @@ function renderProductsList() {
           : `<div class="admin-thumb admin-thumb--empty">Sin imagen</div>`;
       const hidden = p.badge === "__hidden__";
       const status = hidden ? "No publicado" : "Publicado";
+      const weightLabel = p.weight_g ? `${p.weight_g} g` : "sin peso";
+      const hasDims = p.length_cm || p.width_cm || p.height_cm;
+      const dims = hasDims ? `${p.length_cm || "-"}x${p.width_cm || "-"}x${p.height_cm || "-"} cm` : "";
       return `<div class="product-row">
         <div class="product-row__media">${img}</div>
         <div class="product-row__info">
           <div class="product-row__title">${p.name || "-"}</div>
           <div class="product-row__meta">${p.size || ""} - ${p.type || ""} - ${formatCurrency(p.price || 0)}</div>
+          <div class="product-row__meta">Peso: ${weightLabel}${dims ? ` · ${dims}` : ""}</div>
           <div class="product-row__desc">${p.description || ""}</div>
-          <div class="product-row__status ${hidden ? "status-pill status-pill--off" : "status-pill status-pill--on"}">${status}</div>
+          <div class="product-row__status ${hidden ? "status-pill status-pill--off" : "status-pill status-pill--on"}">${status}${hidden ? " · No se muestra en catálogo" : ""}</div>
         </div>
         <div class="product-row__actions">
           <button class="btn btn--ghost" data-edit="${p.id}">Editar</button>
@@ -625,6 +657,10 @@ async function duplicateProduct(id) {
       description: prod.description || "",
       images,
     };
+    if (prod.weight_g) body.weight_g = prod.weight_g;
+    if (prod.length_cm) body.length_cm = prod.length_cm;
+    if (prod.width_cm) body.width_cm = prod.width_cm;
+    if (prod.height_cm) body.height_cm = prod.height_cm;
     await fetch(`${API_BASE}/products`, {
       method: "POST",
       headers: {

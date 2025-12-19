@@ -146,15 +146,21 @@
                 <option value="combo">Combo</option>
               </select>
             </div>
-            <div class="field-row">
-              <input id="pBadge" type="text" placeholder="Badge (opcional)">
-              <input id="pDescription" type="text" placeholder="Descripcion corta (opcional)">
-            </div>
-            <div class="field-row">
-              <input id="pImageUrl" type="text" placeholder="URL de imagen (opcional si subes archivo)">
-              <input id="pImageFile" type="file" accept="image/*">
-              <button class="btn" id="uploadImageBtn" type="button">Subir imagen</button>
-              <span class="pill" id="uploadStatus" style="display:none;"></span>
+          <div class="field-row">
+            <input id="pBadge" type="text" placeholder="Badge (opcional)">
+            <input id="pDescription" type="text" placeholder="Descripcion corta (opcional)">
+          </div>
+          <div class="field-row">
+            <input id="pWeight" type="number" min="0" step="1" placeholder="Peso (g)">
+            <input id="pLength" type="number" min="0" step="0.1" placeholder="Largo (cm)">
+            <input id="pWidth" type="number" min="0" step="0.1" placeholder="Ancho (cm)">
+            <input id="pHeight" type="number" min="0" step="0.1" placeholder="Alto (cm)">
+          </div>
+          <div class="field-row">
+            <input id="pImageUrl" type="text" placeholder="URL de imagen (opcional si subes archivo)">
+            <input id="pImageFile" type="file" accept="image/*">
+            <button class="btn" id="uploadImageBtn" type="button">Subir imagen</button>
+            <span class="pill" id="uploadStatus" style="display:none;"></span>
             </div>
             <div class="field-row">
               <button class="btn" id="createProductBtn" type="button">Crear producto</button>

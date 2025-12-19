@@ -6,6 +6,7 @@ require("dotenv").config();
 const router = Router();
 
 const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || "";
+const MP_SELLER_ID = process.env.MP_SELLER_ID || "264146233";
 const ORDER_SHEET_NAME = process.env.ORDER_SHEET_NAME || "orders";
 const DOC_CACHE_TTL_MS = 5 * 60 * 1000;
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
@@ -101,8 +102,22 @@ function buildShipments(body = {}) {
   const addr = body.address || {};
   const zip = (addr.zip || body.cp || "").toString().trim();
   const pickup = !!body.pickup;
-  const streetName = String(addr.street || "").trim();
-  const streetNumber = Number(addr.street_number || addr.number || addr.num || 0) || 1;
+  const streetName = String(
+    addr.street ||
+      addr.street_name ||
+      body.street ||
+      body.street_name ||
+      "Consulta"
+  ).trim();
+  const streetNumber =
+    Number(
+      addr.street_number ||
+        addr.number ||
+        addr.num ||
+        body.street_number ||
+        body.number ||
+        1
+    ) || 1;
   if (pickup) return null;
   if (!zip || !streetName || !streetNumber) return null;
   const city = String(addr.city || "").trim();
@@ -400,6 +415,53 @@ router.get("/label/:orderId", async (req, res) => {
   } catch (err) {
     console.error("Error obteniendo etiqueta:", err);
     res.status(500).json({ error: "No se pudo obtener la etiqueta" });
+  }
+});
+
+// Consultar cobertura y costo estimado de envíos antes de pagar
+router.post("/shipping-options", async (req, res) => {
+  try {
+    const price = Number(req.body?.price || req.body?.total || 1) || 1;
+    const shipments = buildShipments({
+      ...req.body,
+      pickup: false,
+      address: {
+        ...(req.body?.address || {}),
+        zip: req.body?.cp || req.body?.address?.zip,
+        street: req.body?.address?.street || req.body?.street || "Consulta",
+        street_number:
+          req.body?.address?.street_number ||
+          req.body?.number ||
+          req.body?.street_number ||
+          1,
+      },
+    });
+    if (!shipments || !shipments.receiver_address?.zip_code) {
+      return res.status(400).json({ error: "Faltan datos de dirección o CP" });
+    }
+    const dims = shipments.dimensions || "9x5x4,20";
+    const zip = shipments.receiver_address.zip_code;
+    const url = `https://api.mercadolibre.com/users/${MP_SELLER_ID}/shipping_options?zip_code=${zip}&dimensions=${encodeURIComponent(
+      dims
+    )}&item_price=${price}`;
+    const mpRes = await fetch(url, {
+      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+    });
+    const data = await mpRes.json();
+    if (!mpRes.ok) {
+      console.error("MP shipping options error:", data);
+      return res
+        .status(400)
+        .json({ error: "No hay cobertura para ese código postal", detail: data });
+    }
+    res.json({
+      ok: true,
+      options: data.options || [],
+      destination: data.destination || data.receiver_address || null,
+    });
+  } catch (err) {
+    console.error("Error consultando opciones de envío", err);
+    res.status(500).json({ error: "No se pudieron consultar opciones de envío" });
   }
 });
 

@@ -137,6 +137,7 @@ const ORDER_URL = "https://ganchos-blistero-production.up.railway.app/api/orders
 const PAY_URL = "https://ganchos-blistero-production.up.railway.app/api/pago/create";
 const CHECKOUT_URL = "https://ganchos-blistero-production.up.railway.app/api/pago/checkout";
 const PAY_STATUS_URL = "https://ganchos-blistero-production.up.railway.app/api/pago/check";
+const SHIPPING_OPTIONS_URL = "https://ganchos-blistero-production.up.railway.app/api/pago/shipping-options";
 const nombreInput = document.getElementById("nombre");
 const telInput = document.getElementById("tel");
 const calleInput = document.getElementById("calle");
@@ -149,16 +150,17 @@ const loaderOverlay = document.getElementById("loaderOverlay");
 const brandEl = document.querySelector(".brand");
 const pickupToggle = document.getElementById("pickupToggle");
 let isLoadingCatalog = true;
+let shippingEstimate = null;
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(value);
 }
 
 function getShipping(subtotal) {
-  // Envío desactivado: siempre $0
+  if (pickupToggle?.checked) return 0;
+  if (shippingEstimate !== null && !isNaN(shippingEstimate)) return Number(shippingEstimate);
   return 0;
 }
-
 function normalizeImageUrl(url) {
   if (!url) return "";
   const driveMatch = url.match(/https?:\/\/drive\.google\.com\/file\/d\/([^/]+)/);
@@ -218,7 +220,7 @@ function renderCatalog() {
       <div class="card__tag">${p.badge}</div>
       <div class="card__image" data-view="${p.id}">
         ${p.images?.[0] && /^https?:\/\//.test(p.images[0])
-          ? `<img src="${p.images[0]}" alt="${p.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">`
+          ? `<img loading="lazy" src="${p.images[0]}" alt="${p.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">`
           : `<span class="card__label">${p.imageLabel || (p.name?.charAt(0) || "G")}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
@@ -256,7 +258,7 @@ function renderFeatured() {
       <div class="card__tag">${p.badge}</div>
       <div class="card__image" data-view="${p.id}">
         ${p.images?.[0] && /^https?:\/\//.test(p.images[0])
-          ? `<img src="${p.images[0]}" alt="${p.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">`
+          ? `<img loading="lazy" src="${p.images[0]}" alt="${p.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">`
           : `<span class="card__label">${p.imageLabel || (p.name?.charAt(0) || "G")}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
@@ -293,7 +295,7 @@ function renderCombos() {
       <div class="card__tag">${p.badge}</div>
       <div class="card__image" data-view="${p.id}">
         ${p.images?.[0] && /^https?:\/\//.test(p.images[0])
-          ? `<img src="${p.images[0]}" alt="${p.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">`
+          ? `<img loading="lazy" src="${p.images[0]}" alt="${p.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">`
           : `<span class="card__label">${p.imageLabel || (p.name?.charAt(0) || "G")}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
@@ -329,6 +331,7 @@ function addToCart(id) {
     ? { ...cart[cartKey], qty: cart[cartKey].qty + 1 }
     : { ...product, id: cartKey, baseId: product.id, colorName: color.name, name: displayName, qty: 1 };
   persistCart();
+  shippingEstimate = null;
   renderCart();
   renderCheckoutSummary();
   toggleCart(true);
@@ -339,6 +342,7 @@ function changeQty(id, delta) {
   cart[id].qty += delta;
   if (cart[id].qty <= 0) delete cart[id];
   persistCart();
+  shippingEstimate = null;
   renderCart();
   renderCheckoutSummary();
 }
@@ -392,7 +396,12 @@ function renderCart() {
   const subtotal = items.reduce((acc, i) => acc + i.qty * i.price, 0);
   const shipping = getShipping(subtotal);
   subtotalText.textContent = formatCurrency(subtotal);
-  shippingText.textContent = shipping === 0 ? "Calculado en MP" : formatCurrency(shipping);
+  const shippingLabel = pickupToggle?.checked
+    ? "Retiro en local"
+    : shippingEstimate === null
+    ? "Calculado en MP"
+    : formatCurrency(shipping);
+  shippingText.textContent = shippingLabel;
   totalText.textContent = formatCurrency(subtotal + shipping);
 }
 
@@ -419,7 +428,7 @@ function renderCheckoutSummary() {
   const shipping = getShipping(subtotal);
   checkoutTotals.innerHTML = `
     <div class="totals__row"><span>Subtotal</span><strong>${formatCurrency(subtotal)}</strong></div>
-    <div class="totals__row"><span>Envío</span><strong>${shipping === 0 ? "Calculado en MP" : formatCurrency(shipping)}</strong></div>
+    <div class="totals__row"><span>Envio</span><strong>${shippingLabel}</strong></div>
     <div class="totals__row totals__row--highlight"><span>Total</span><strong>${formatCurrency(subtotal + shipping)}</strong></div>
   `;
   checkoutSummary.querySelectorAll("[data-qty]").forEach(btn => {
@@ -454,6 +463,16 @@ function renderFilters() {
   });
 }
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function isValidEmail(email = "") {
+  return emailRegex.test((email || "").trim());
+}
+
+function isValidPhone(phone = "") {
+  const digits = (phone || "").replace(/\D/g, "");
+  return digits.length >= 8;
+}
+
 function isCheckoutReady() {
   if (!emailInput || !paisSelect || !cpInput) return true;
   const email = emailInput.value.trim();
@@ -465,9 +484,9 @@ function isCheckoutReady() {
   const city = ciudadInput?.value.trim() || "";
   const prov = provinciaInput?.value.trim() || "";
   const pickup = pickupToggle?.checked;
-  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validEmail = isValidEmail(email);
   const validCp = cp.length >= 3;
-  const datosOk = validEmail && nombre.length > 1 && tel.length > 5;
+  const datosOk = validEmail && nombre.length > 1 && isValidPhone(tel);
   const direccionOk =
     validCp &&
     paisSelect.value.length > 0 &&
@@ -579,9 +598,63 @@ async function createPreference(items) {
   return null;
 }
 
+async function fetchShippingEstimate(subtotal) {
+  if (pickupToggle?.checked) {
+    shippingEstimate = 0;
+    return 0;
+  }
+  const cp = cpInput?.value?.trim();
+  if (!cp) return null;
+  const address = {
+    zip: cp,
+    street: calleInput?.value || "Consulta",
+    street_number: numeroInput?.value || 1,
+    city: ciudadInput?.value || "",
+    state: provinciaInput?.value || "",
+    country: paisSelect?.value || "",
+  };
+  const items = Object.values(cart).map((i) => ({
+    title: i.name,
+    quantity: i.qty,
+    unit_price: i.price,
+    size: i.size,
+    weight_g: i.weight_g,
+    length_cm: i.length_cm,
+    width_cm: i.width_cm,
+    height_cm: i.height_cm,
+  }));
+  try {
+    const res = await fetch(SHIPPING_OPTIONS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cp,
+        price: Math.max(1, subtotal),
+        total: Math.max(1, subtotal),
+        address,
+        items,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.options?.length) return null;
+    const costOf = (opt) =>
+      Number(
+        opt.cost ??
+          opt.list_cost ??
+          opt.base_cost ??
+          (Array.isArray(opt.components) ? opt.components.reduce((s, c) => s + Number(c.cost || 0), 0) : 0)
+      );
+    const best = data.options.reduce((a, b) => (costOf(b) < costOf(a) ? b : a));
+    shippingEstimate = Math.round(costOf(best) || 0);
+    return shippingEstimate;
+  } catch (_) {
+    return null;
+  }
+}
+
 async function handleCheckout() {
   if (!isCheckoutReady()) {
-    alert("Completa email, teléfono, calle y número, y código postal antes de enviar.");
+    alert("Completa email, telefono, calle y numero, y codigo postal antes de enviar.");
     return;
   }
   const items = Object.values(cart);
@@ -590,34 +663,55 @@ async function handleCheckout() {
     return;
   }
   const subtotal = items.reduce((acc, i) => acc + i.qty * i.price, 0);
-  const shipping = getShipping(subtotal);
-  const payload = {
-    name: nombreInput?.value || "Checkout web",
-    email: emailInput?.value || "",
-    phone: telInput?.value || "",
-    total: subtotal + shipping,
-    cp: cpInput?.value || "",
-    pais: paisSelect?.value || "",
-    address: {
-      street: `${calleInput?.value || ""}`.trim(),
-      number: `${numeroInput?.value || ""}`.trim(),
-      floor: pisoInput?.value || "",
-      city: ciudadInput?.value || "",
-      state: provinciaInput?.value || "",
-      country: paisSelect?.value || "",
-      zip: cpInput?.value || "",
-    },
-    pickup: pickupToggle?.checked || false,
-    items: items.map((i) => ({
-      title: i.name,
-      quantity: i.qty,
-      unit_price: i.price,
-      size: i.size,
-    })),
-    notes: pickupToggle?.checked ? "Retiro en local" : "Pedido web pendiente de confirmaci¾n",
-  };
   try {
     showLoader();
+    let shipping = 0;
+    if (!pickupToggle?.checked) {
+      const estimate = await fetchShippingEstimate(subtotal);
+      if (estimate === null) {
+        alert("No hay cobertura de envios para ese codigo postal. Activa retiro en local o revisa el CP.");
+        if (pickupToggle) pickupToggle.checked = true;
+        shippingEstimate = pickupToggle?.checked ? 0 : null;
+        renderCart();
+        renderCheckoutSummary();
+        hideLoader();
+        return;
+      }
+      shipping = estimate;
+    } else {
+      shippingEstimate = 0;
+    }
+    const payload = {
+      name: nombreInput?.value || "Checkout web",
+      email: emailInput?.value || "",
+      phone: telInput?.value || "",
+      total: subtotal + shipping,
+      cp: cpInput?.value || "",
+      pais: paisSelect?.value || "",
+      address: {
+        street: `${calleInput?.value || ""}`.trim(),
+        number: `${numeroInput?.value || ""}`.trim(),
+        floor: pisoInput?.value || "",
+        city: ciudadInput?.value || "",
+        state: provinciaInput?.value || "",
+        country: paisSelect?.value || "",
+        zip: cpInput?.value || "",
+      },
+      pickup: pickupToggle?.checked || false,
+      items: items.map((i) => ({
+        title: i.name,
+        quantity: i.qty,
+        unit_price: i.price,
+        size: i.size,
+        weight_g: i.weight_g,
+        length_cm: i.length_cm,
+        width_cm: i.width_cm,
+        height_cm: i.height_cm,
+      })),
+      notes: pickupToggle?.checked ? "Retiro en local" : "Pedido web pendiente de confirmacion",
+    };
+    renderCart();
+    renderCheckoutSummary();
     // Un solo request al backend: crea la orden y la preferencia MP
     const res = await fetch(CHECKOUT_URL, {
       method: "POST",
@@ -634,14 +728,16 @@ async function handleCheckout() {
     alert(`Pedido enviado. ID: ${data.order_id || "pendiente"}`);
     Object.keys(cart).forEach((k) => delete cart[k]);
     persistCart();
+    shippingEstimate = null;
     renderCart();
     renderCheckoutSummary();
   } catch (err) {
-    alert("No se pudo enviar el pedido o crear el pago. Reintenta o contßctanos.");
+    alert("No se pudo enviar el pedido o crear el pago. Reintenta o contactanos.");
   } finally {
     hideLoader();
   }
 }
+
 
 document.addEventListener("DOMContentLoaded", () => {
   // muestra skeletons de entrada
@@ -654,10 +750,18 @@ document.addEventListener("DOMContentLoaded", () => {
   if (finalizeBtn) finalizeBtn.addEventListener("click", () => { location.href = "checkout.html"; });
   if (checkoutPageBtn) checkoutPageBtn.addEventListener("click", handleCheckout);
   [emailInput, paisSelect, cpInput, nombreInput, telInput, calleInput, numeroInput, pisoInput, ciudadInput, provinciaInput].forEach(el => {
-    if (el) el.addEventListener("input", updatePayButtonState);
+    if (el) el.addEventListener("input", () => {
+      if (el === cpInput || el === paisSelect || el === calleInput || el === numeroInput || el === ciudadInput || el === provinciaInput) {
+        shippingEstimate = null;
+        renderCart();
+        renderCheckoutSummary();
+      }
+      updatePayButtonState();
+    });
   });
   if (pickupToggle) {
     pickupToggle.addEventListener("change", () => {
+      shippingEstimate = pickupToggle.checked ? 0 : null;
       renderCart();
       renderCheckoutSummary();
       updatePayButtonState();
