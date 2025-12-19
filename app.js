@@ -147,6 +147,7 @@ const ciudadInput = document.getElementById("ciudad");
 const provinciaInput = document.getElementById("provincia");
 const stepBlocks = document.querySelectorAll(".step-block");
 const loaderOverlay = document.getElementById("loaderOverlay");
+let loaderTimeout = null;
 const brandEl = document.querySelector(".brand");
 const pickupToggle = document.getElementById("pickupToggle");
 let isLoadingCatalog = true;
@@ -625,7 +626,7 @@ async function fetchShippingEstimate(subtotal) {
   }));
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6500);
+    const timer = setTimeout(() => controller.abort(), 3500);
     const res = await fetch(SHIPPING_OPTIONS_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -673,15 +674,11 @@ async function handleCheckout() {
     if (!pickupToggle?.checked) {
       const estimate = await fetchShippingEstimate(subtotal);
       if (estimate === null) {
-        alert("No hay cobertura de envios para ese codigo postal. Activa retiro en local o revisa el CP.");
-        if (pickupToggle) pickupToggle.checked = true;
-        shippingEstimate = pickupToggle?.checked ? 0 : null;
-        renderCart();
-        renderCheckoutSummary();
-        hideLoader();
-        return;
+        shippingEstimate = null;
+        shipping = 0;
+      } else {
+        shipping = estimate;
       }
-      shipping = estimate;
     } else {
       shippingEstimate = 0;
     }
@@ -962,8 +959,11 @@ function renderSkeleton(count = 3) {
 function showLoader() {
   if (!loaderOverlay) return;
   loaderOverlay.classList.add("is-visible");
+  if (loaderTimeout) clearTimeout(loaderTimeout);
+  loaderTimeout = setTimeout(() => loaderOverlay.classList.remove("is-visible"), 5000);
 }
 function hideLoader() {
   if (!loaderOverlay) return;
+  if (loaderTimeout) clearTimeout(loaderTimeout);
   loaderOverlay.classList.remove("is-visible");
 }
