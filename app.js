@@ -624,6 +624,8 @@ async function fetchShippingEstimate(subtotal) {
     height_cm: i.height_cm,
   }));
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6500);
     const res = await fetch(SHIPPING_OPTIONS_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -634,7 +636,9 @@ async function fetchShippingEstimate(subtotal) {
         address,
         items,
       }),
+      signal: controller.signal,
     });
+    clearTimeout(timer);
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data?.options?.length) return null;
     const costOf = (opt) =>

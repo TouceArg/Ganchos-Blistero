@@ -418,6 +418,43 @@ router.get("/label/:orderId", async (req, res) => {
   }
 });
 
+// Tracking de envío ME2
+router.get("/tracking/:orderId", async (req, res) => {
+  if (!isAdmin(req)) return res.status(401).json({ error: "No autorizado" });
+  const { orderId } = req.params;
+  try {
+    const payment = await findPaymentByExternalRef(orderId);
+    if (!payment) return res.status(404).json({ error: "No se encontró pago" });
+    const shipmentId =
+      payment?.shipping?.id ||
+      payment?.shipments?.id ||
+      (payment?.shipping && payment.shipping?.shipments_id);
+    if (!shipmentId) return res.status(404).json({ error: "No hay envío ME2 asociado" });
+    const shipRes = await fetch(`https://api.mercadopago.com/v1/shipments/${shipmentId}`, {
+      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+    });
+    const shipment = await shipRes.json();
+    if (!shipRes.ok) {
+      console.error("MP shipment error:", shipment);
+      return res.status(500).json({ error: "No se pudo obtener el tracking" });
+    }
+    const trackingUrl =
+      shipment.tracking_url ||
+      shipment.tracking_url_provider ||
+      `https://envios.mercadolibre.com.ar/tracking?shipment_id=${shipmentId}`;
+    res.json({
+      ok: true,
+      shipment_id: shipmentId,
+      tracking_number: shipment.tracking_number || shipment.tracking_number_provider || "",
+      status: shipment.status || shipment.substatus || "",
+      tracking_url: trackingUrl,
+    });
+  } catch (err) {
+    console.error("Error obteniendo tracking:", err);
+    res.status(500).json({ error: "No se pudo obtener el tracking" });
+  }
+});
+
 // Consultar cobertura y costo estimado de envíos antes de pagar
 router.post("/shipping-options", async (req, res) => {
   try {
