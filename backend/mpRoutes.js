@@ -117,22 +117,22 @@ function buildShipments(body = {}) {
   items.forEach((i) => {
     const qty = Number(i.quantity || i.qty || 1);
     const has12 = String(i.size || "").includes("12");
-    const defaults = has12 ? { l: 16, w: 10, h: 6, g: 150 } : { l: 14, w: 9, h: 6, g: 120 };
+    const defaults = has12 ? { l: 12, w: 6, h: 4, g: 30 } : { l: 9, w: 5, h: 4, g: 20 };
     const l = Number(i.length_cm || defaults.l) || defaults.l;
     const w = Number(i.width_cm || defaults.w) || defaults.w;
     const h = Number(i.height_cm || defaults.h) || defaults.h;
     const wKg = Number(i.weight_kg) || 0;
-    const wGr = Number(i.weight_g) || (wKg ? wKg * 1000 : defaults.g); // default 120-150g
+    const wGr = Number(i.weight_g) || (wKg ? wKg * 1000 : defaults.g); // default 20-30g
     maxL = Math.max(maxL, l);
     maxW = Math.max(maxW, w);
     maxH = Math.max(maxH, h);
     totalWeightGr += wGr * qty;
   });
-  if (maxL === 0) maxL = 20;
-  if (maxW === 0) maxW = 15;
-  if (maxH === 0) maxH = 8;
-  if (typeof totalWeightGr === "undefined" || totalWeightGr <= 0) totalWeightGr = 200;
-  if (totalWeightGr < 200) totalWeightGr = 200; // minimo 200g para ME2
+  if (maxL < 8) maxL = 8;
+  if (maxW < 5) maxW = 5;
+  if (maxH < 4) maxH = 4;
+  if (typeof totalWeightGr === "undefined" || totalWeightGr <= 0) totalWeightGr = 20;
+  if (totalWeightGr < 20) totalWeightGr = 20; // minimo 20g para ME2
   const dimensions = `${maxL}x${maxW}x${maxH},${Math.round(totalWeightGr)}`;
   return {
     mode: "me2",
