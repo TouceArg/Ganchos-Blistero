@@ -427,11 +427,17 @@ function renderCheckoutSummary() {
   `).join("");
   const subtotal = items.reduce((acc, i) => acc + i.qty * i.price, 0);
   const shipping = getShipping(subtotal);
+  const shippingLabel = pickupToggle?.checked
+    ? "Retiro en local"
+    : shippingEstimate === null
+    ? "Calculado en MP"
+    : formatCurrency(shipping);
   checkoutTotals.innerHTML = `
     <div class="totals__row"><span>Subtotal</span><strong>${formatCurrency(subtotal)}</strong></div>
     <div class="totals__row"><span>Envio</span><strong>${shippingLabel}</strong></div>
     <div class="totals__row totals__row--highlight"><span>Total</span><strong>${formatCurrency(subtotal + shipping)}</strong></div>
   `;
+
   checkoutSummary.querySelectorAll("[data-qty]").forEach(btn => {
     btn.addEventListener("click", () => changeQty(btn.dataset.qty, Number(btn.dataset.delta)));
   });
@@ -874,7 +880,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function fetchCatalog() {
-  showLoader();
   isLoadingCatalog = true;
   renderCatalog();
   renderFeatured();
@@ -936,7 +941,6 @@ async function fetchCatalog() {
     renderCombos();
     renderCart();
     renderCheckoutSummary();
-    hideLoader();
   }
 }
 
