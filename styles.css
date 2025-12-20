@@ -1523,6 +1523,9 @@ iframe {
     background: #13141a;
     color: #f5f5f7;
     font-weight: 700;
+    font-size: 0;
+    line-height: 1;
+    overflow: hidden;
     box-shadow: none;
     transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
 }
