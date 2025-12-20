@@ -132,7 +132,8 @@ function buildShipments(body = {}) {
   items.forEach((i) => {
     const qty = Number(i.quantity || i.qty || 1);
     const has12 = String(i.size || "").includes("12");
-    const defaults = has12 ? { l: 12, w: 6, h: 4, g: 30 } : { l: 9, w: 5, h: 4, g: 20 };
+    // Ajustamos a dimensiones/peso mínimos que manejan los ganchos reales
+    const defaults = has12 ? { l: 12, w: 1, h: 1, g: 8 } : { l: 8, w: 1, h: 1, g: 5 };
     const l = Number(i.length_cm || defaults.l) || defaults.l;
     const w = Number(i.width_cm || defaults.w) || defaults.w;
     const h = Number(i.height_cm || defaults.h) || defaults.h;
@@ -144,10 +145,10 @@ function buildShipments(body = {}) {
     totalWeightGr += wGr * qty;
   });
   if (maxL < 8) maxL = 8;
-  if (maxW < 5) maxW = 5;
-  if (maxH < 4) maxH = 4;
-  if (typeof totalWeightGr === "undefined" || totalWeightGr <= 0) totalWeightGr = 20;
-  if (totalWeightGr < 20) totalWeightGr = 20; // minimo 20g para ME2
+  if (maxW < 1) maxW = 1;
+  if (maxH < 1) maxH = 1;
+  if (typeof totalWeightGr === "undefined" || totalWeightGr <= 0) totalWeightGr = 5;
+  if (totalWeightGr < 5) totalWeightGr = 5; // mínimo 5g (eran 1-2g reales)
   const dimensions = `${maxL}x${maxW}x${maxH},${Math.round(totalWeightGr)}`;
   return {
     mode: "me2",
