@@ -446,12 +446,15 @@ router.get("/label/:orderId", async (req, res) => {
     // Si se pide formato PDF, proxy desde el backend para evitar bloqueos de políticas/CORS
     if (req.query.format === "pdf") {
       const pdfRes = await fetch(`${ML_API_BASE}/shipment_labels?shipment_ids=${shipmentId}`, {
-        headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+          Accept: "application/pdf",
+        },
       });
       if (!pdfRes.ok) {
         const errBody = await pdfRes.text();
         return res
-          .status(500)
+          .status(pdfRes.status || 500)
           .json({ error: "No se pudo obtener la etiqueta", detail: errBody || pdfRes.statusText });
       }
       const buf = Buffer.from(await pdfRes.arrayBuffer());
