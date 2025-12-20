@@ -11,6 +11,7 @@ const ORDER_SHEET_NAME = process.env.ORDER_SHEET_NAME || "orders";
 const DOC_CACHE_TTL_MS = 5 * 60 * 1000;
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
 const MP_API_BASE = "https://api.mercadopago.com";
+const ML_API_BASE = "https://api.mercadolibre.com";
 
 let cachedDoc = null;
 let cachedDocAt = 0;
@@ -438,7 +439,7 @@ router.get("/label/:orderId", async (req, res) => {
       (payment?.shipping && payment.shipping?.shipments_id) ||
       (await fetchMerchantOrderShipment(payment));
     if (!shipmentId) return res.status(404).json({ error: "No hay envio ME2 asociado" });
-    const labelUrl = `https://api.mercadopago.com/shipment_labels?shipment_ids=${shipmentId}&access_token=${ACCESS_TOKEN}`;
+    const labelUrl = `${ML_API_BASE}/shipment_labels?shipment_ids=${shipmentId}&access_token=${ACCESS_TOKEN}`;
     res.json({ ok: true, shipment_id: shipmentId, payment_id: payment.id, url: labelUrl });
   } catch (err) {
     console.error("Error obteniendo etiqueta:", err);
@@ -460,7 +461,7 @@ router.get("/tracking/:orderId", async (req, res) => {
       (payment?.shipping && payment.shipping?.shipments_id) ||
       (await fetchMerchantOrderShipment(payment));
     if (!shipmentId) return res.status(404).json({ error: "No hay envio ME2 asociado" });
-    const shipRes = await fetch(`https://api.mercadopago.com/v1/shipments/${shipmentId}`, {
+    const shipRes = await fetch(`${ML_API_BASE}/v1/shipments/${shipmentId}`, {
       headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
     });
     const shipment = await shipRes.json();
