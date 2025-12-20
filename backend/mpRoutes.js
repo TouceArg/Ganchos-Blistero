@@ -73,7 +73,9 @@ async function updateOrderStatus(orderId, status, notes) {
   if (status) row.set("status", status);
   if (notes) {
     const prev = row.get("notes") || row.notes || "";
-    const combined = prev ? `${prev} | ${notes}` : notes;
+    // Evita duplicar la misma nota si ya está presente
+    const already = prev.includes(notes);
+    const combined = already ? prev : (prev ? `${prev} | ${notes}` : notes);
     row.set("notes", combined);
   }
   await row.save();
@@ -440,6 +442,24 @@ router.get("/label/:orderId", async (req, res) => {
       (await fetchMerchantOrderShipment(payment));
     if (!shipmentId) return res.status(404).json({ error: "No hay envio ME2 asociado" });
     const labelUrl = `${ML_API_BASE}/shipment_labels?shipment_ids=${shipmentId}&access_token=${ACCESS_TOKEN}`;
+
+    // Si se pide formato PDF, proxy desde el backend para evitar bloqueos de políticas/CORS
+    if (req.query.format === "pdf") {
+      const pdfRes = await fetch(`${ML_API_BASE}/shipment_labels?shipment_ids=${shipmentId}`, {
+        headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+      });
+      if (!pdfRes.ok) {
+        const errBody = await pdfRes.text();
+        return res
+          .status(500)
+          .json({ error: "No se pudo obtener la etiqueta", detail: errBody || pdfRes.statusText });
+      }
+      const buf = Buffer.from(await pdfRes.arrayBuffer());
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename=\"label-${shipmentId}.pdf\"`);
+      return res.send(buf);
+    }
+
     res.json({ ok: true, shipment_id: shipmentId, payment_id: payment.id, url: labelUrl });
   } catch (err) {
     console.error("Error obteniendo etiqueta:", err);
