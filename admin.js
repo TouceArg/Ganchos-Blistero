@@ -127,7 +127,8 @@ function renderOrders() {
             <textarea rows="2" data-notes="${o.order_id}" class="notes-input">${o.notes || ""}</textarea>
             <button class="btn btn--ghost" data-save="${o.order_id}" style="margin-top:6px;">Guardar</button>
             <button class="btn btn--ghost" data-del="${o.order_id}" style="margin-top:6px;">Eliminar</button>
-            <button class="btn btn--ghost" data-label="${o.order_id}" style="margin-top:6px;">Imprimir etiqueta</button>
+        <button class="btn btn--ghost" data-label="${o.order_id}" style="margin-top:6px;">Imprimir etiqueta</button>
+        <button class="btn btn--ghost" data-track="${o.order_id}" style="margin-top:6px;">Ver tracking</button>
             ${isPickup ? '<div class="pill" style="margin-top:6px;background:rgba(59,209,111,0.18);color:#3bd16f;">Retiro en local</div>' : ""}
           </td>
         </tr>
@@ -192,6 +193,12 @@ function wireActions() {
       await openLabel(id);
     });
   });
+  document.querySelectorAll("[data-track]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.track;
+      await openTracking(id, btn);
+    });
+  });
 }
 
 async function updateOrder(id, payload) {
@@ -239,6 +246,28 @@ async function openLabel(id) {
     }
   } catch (err) {
     alert("No se pudo obtener la etiqueta.");
+  }
+}
+
+async function openTracking(id, btn) {
+  const originalText = btn?.textContent || "Ver tracking";
+  try {
+    if (btn) btn.textContent = "Consultando...";
+    const res = await fetch(`${API_BASE}/pago/tracking/${id}?token=${adminToken || ""}`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const status = data?.status || data?.substatus || "sin estado";
+    const trackingNum = data?.tracking_number || "n/a";
+    const url = data?.tracking_url || "";
+    if (url) {
+      window.open(url, "_blank");
+    } else {
+      alert(`Estado: ${status}\nTracking: ${trackingNum}`);
+    }
+  } catch (err) {
+    alert("No se pudo obtener el tracking.");
+  } finally {
+    if (btn) btn.textContent = originalText;
   }
 }
 
