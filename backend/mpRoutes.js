@@ -484,25 +484,48 @@ router.get("/tracking/:orderId", async (req, res) => {
       (payment?.shipping && payment.shipping?.shipments_id) ||
       (await fetchMerchantOrderShipment(payment));
     if (!shipmentId) return res.status(404).json({ error: "No hay envio ME2 asociado" });
-    const shipRes = await fetch(`${ML_API_BASE}/v1/shipments/${shipmentId}`, {
-      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-    });
-    const shipment = await shipRes.json();
-    if (!shipRes.ok) {
-      console.error("MP shipment error:", shipment);
-      return res.status(500).json({ error: "No se pudo obtener el tracking" });
+    const fallbackUrl = `https://envios.mercadolibre.com.ar/tracking?shipment_id=${shipmentId}`;
+    try {
+      const shipRes = await fetch(`${ML_API_BASE}/v1/shipments/${shipmentId}`, {
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+          Accept: "application/json",
+        },
+      });
+      const shipment = await shipRes.json();
+      if (!shipRes.ok) {
+        console.error("MP shipment error:", shipment);
+        return res.json({
+          ok: true,
+          shipment_id: shipmentId,
+          tracking_number: "",
+          status: "unknown",
+          tracking_url: fallbackUrl,
+          warning: "No se pudo obtener el tracking en ML, usando link público",
+        });
+      }
+      const trackingUrl =
+        shipment.tracking_url ||
+        shipment.tracking_url_provider ||
+        fallbackUrl;
+      res.json({
+        ok: true,
+        shipment_id: shipmentId,
+        tracking_number: shipment.tracking_number || shipment.tracking_number_provider || "",
+        status: shipment.status || shipment.substatus || "",
+        tracking_url: trackingUrl,
+      });
+    } catch (err) {
+      console.error("Error obteniendo tracking:", err);
+      return res.json({
+        ok: true,
+        shipment_id: shipmentId,
+        tracking_number: "",
+        status: "unknown",
+        tracking_url: fallbackUrl,
+        warning: "No se pudo obtener el tracking en ML, usando link público",
+      });
     }
-    const trackingUrl =
-      shipment.tracking_url ||
-      shipment.tracking_url_provider ||
-      `https://envios.mercadolibre.com.ar/tracking?shipment_id=${shipmentId}`;
-    res.json({
-      ok: true,
-      shipment_id: shipmentId,
-      tracking_number: shipment.tracking_number || shipment.tracking_number_provider || "",
-      status: shipment.status || shipment.substatus || "",
-      tracking_url: trackingUrl,
-    });
   } catch (err) {
     console.error("Error obteniendo tracking:", err);
     res.status(500).json({ error: "No se pudo obtener el tracking" });
