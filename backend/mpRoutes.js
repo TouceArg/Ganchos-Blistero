@@ -10,6 +10,7 @@ const MP_SELLER_ID = process.env.MP_SELLER_ID || "264146233";
 const ORDER_SHEET_NAME = process.env.ORDER_SHEET_NAME || "orders";
 const DOC_CACHE_TTL_MS = 5 * 60 * 1000;
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
+const MP_API_BASE = "https://api.mercadopago.com";
 
 let cachedDoc = null;
 let cachedDocAt = 0;
@@ -96,6 +97,29 @@ function isAdmin(req) {
   if (!ADMIN_TOKEN) return true;
   const t = req.headers["x-admin-token"] || req.query.token;
   return t === ADMIN_TOKEN;
+}
+
+async function fetchMerchantOrderShipment(payment) {
+  try {
+    const moId = payment?.order?.id;
+    if (!moId) return null;
+    const moRes = await fetch(`${MP_API_BASE}/merchant_orders/${moId}`, {
+      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+    });
+    const mo = await moRes.json();
+    if (!moRes.ok) {
+      console.error("MP merchant_order error:", mo);
+      return null;
+    }
+    if (Array.isArray(mo.shipments) && mo.shipments.length) {
+      const first = mo.shipments[0];
+      return first.id || first.shipment_id || null;
+    }
+    return null;
+  } catch (e) {
+    console.error("Error leyendo merchant_order para shipment", e);
+    return null;
+  }
 }
 
 function buildShipments(body = {}) {
@@ -367,6 +391,7 @@ router.post("/webhook", async (req, res) => {
       info?.shipping?.id ||
       info?.shipments?.id ||
       (info?.shipping && info.shipping?.shipments_id) ||
+      (await fetchMerchantOrderShipment(info)) ||
       "";
     const extraNote = `MP payment ${paymentId} status ${info.status} detail ${info.status_detail || ""} shipment ${shipmentId || "n/a"}`;
     if (orderId) {
@@ -400,17 +425,19 @@ router.get("/check/:orderId", async (req, res) => {
 });
 
 // Devolver URL de etiqueta de envío (ME2) para imprimir desde admin
+// Devolver URL de etiqueta de envio (ME2) para imprimir desde admin
 router.get("/label/:orderId", async (req, res) => {
   if (!isAdmin(req)) return res.status(401).json({ error: "No autorizado" });
   const { orderId } = req.params;
   try {
     const payment = await findPaymentByExternalRef(orderId);
-    if (!payment) return res.status(404).json({ error: "No se encontró pago" });
+    if (!payment) return res.status(404).json({ error: "No se encontro pago" });
     const shipmentId =
-      payment?.shipping?.id ||
-      payment?.shipments?.id ||
-      (payment?.shipping && payment.shipping?.shipments_id);
-    if (!shipmentId) return res.status(404).json({ error: "No hay envío ME2 asociado" });
+      (payment?.shipping?.id) ||
+      (payment?.shipments?.id) ||
+      (payment?.shipping && payment.shipping?.shipments_id) ||
+      (await fetchMerchantOrderShipment(payment));
+    if (!shipmentId) return res.status(404).json({ error: "No hay envio ME2 asociado" });
     const labelUrl = `https://api.mercadopago.com/shipment_labels?shipment_ids=${shipmentId}&access_token=${ACCESS_TOKEN}`;
     res.json({ ok: true, shipment_id: shipmentId, payment_id: payment.id, url: labelUrl });
   } catch (err) {
@@ -420,17 +447,19 @@ router.get("/label/:orderId", async (req, res) => {
 });
 
 // Tracking de envío ME2
+// Tracking de envio ME2
 router.get("/tracking/:orderId", async (req, res) => {
   if (!isAdmin(req)) return res.status(401).json({ error: "No autorizado" });
   const { orderId } = req.params;
   try {
     const payment = await findPaymentByExternalRef(orderId);
-    if (!payment) return res.status(404).json({ error: "No se encontró pago" });
+    if (!payment) return res.status(404).json({ error: "No se encontro pago" });
     const shipmentId =
-      payment?.shipping?.id ||
-      payment?.shipments?.id ||
-      (payment?.shipping && payment.shipping?.shipments_id);
-    if (!shipmentId) return res.status(404).json({ error: "No hay envío ME2 asociado" });
+      (payment?.shipping?.id) ||
+      (payment?.shipments?.id) ||
+      (payment?.shipping && payment.shipping?.shipments_id) ||
+      (await fetchMerchantOrderShipment(payment));
+    if (!shipmentId) return res.status(404).json({ error: "No hay envio ME2 asociado" });
     const shipRes = await fetch(`https://api.mercadopago.com/v1/shipments/${shipmentId}`, {
       headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
     });
