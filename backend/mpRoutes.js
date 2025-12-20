@@ -445,7 +445,7 @@ router.get("/label/:orderId", async (req, res) => {
 
     // Si se pide formato PDF, proxy desde el backend para evitar bloqueos de políticas/CORS
     if (req.query.format === "pdf") {
-      const pdfRes = await fetch(`${ML_API_BASE}/shipment_labels?shipment_ids=${shipmentId}`, {
+      const pdfRes = await fetch(`${ML_API_BASE}/shipments/${shipmentId}/labels?response_type=pdf`, {
         headers: {
           Authorization: `Bearer ${ACCESS_TOKEN}`,
           Accept: "application/pdf",
