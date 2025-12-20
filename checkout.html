@@ -105,16 +105,21 @@
         <button id="checkoutPageBtn" class="pay-btn pay-btn--hidden">Finalizar compra</button>
         <div class="mp-info-card">
           <div class="mp-info-card__header">
-            <span class="mp-info-dot"></span>
             <span class="mp-info-title">Mercado Pago</span>
-            <span class="mp-info-logo">MP</span>
           </div>
           <div class="mp-info-body">
-            <div class="mp-illustration">
-              <div class="mp-screen"></div>
-              <div class="mp-arrow">?</div>
+            <div class="mp-illustration" aria-hidden="true">
+              <svg class="mp-illustration__svg" viewBox="0 0 120 90" role="presentation">
+                <rect x="10" y="15" width="100" height="65" rx="4" ry="4" fill="none" stroke="#6b6b6b" stroke-width="3"></rect>
+                <line x1="10" y1="25" x2="110" y2="25" stroke="#6b6b6b" stroke-width="3"></line>
+                <circle cx="18" cy="20" r="3" fill="#6b6b6b"></circle>
+                <circle cx="28" cy="20" r="3" fill="#6b6b6b"></circle>
+                <circle cx="38" cy="20" r="3" fill="#6b6b6b"></circle>
+                <line x1="68" y1="48" x2="104" y2="48" stroke="#6b6b6b" stroke-width="4" stroke-linecap="round" class="mp-illustration__arrow"></line>
+                <polyline points="94,40 104,48 94,56" fill="none" stroke="#6b6b6b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="mp-illustration__arrow"></polyline>
+              </svg>
             </div>
-            <p>Despu?s de hacer clic en ?Finalizar compra?, ser?s redirigido a Mercado Pago para completar tu compra de forma segura.</p>
+            <p class="mp-info-text">Después de hacer clic en “Pagar ahora”, serás redirigido a Mercado Pago para completar tu compra de forma segura.</p>
           </div>
         </div>
         <div class="trust-row" style="margin-top:10px;">
