@@ -133,29 +133,104 @@ router.post("/", async (req, res) => {
 
     // Notificar por mail (cliente + admin) si hay credenciales
     if (mailer && email) {
-      const adminTo = process.env.DEST_EMAIL || process.env.MAIL_USER || email;
-      const itemsText =
+      const adminTo = process.env.DEST_EMAIL || "ganchosblisterosc4@gmail.com" || process.env.MAIL_USER || email;
+      const fmt = (n) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2 }).format(Number(n || 0));
+      const itemsHtml =
         items
-          ?.map(
-            (i) =>
-              `• ${i.name || i.title || "Item"} x${i.qty || i.quantity || 1} - $${i.price || i.unit_price || 0}`
-          )
-          .join("\n") || "";
-      const baseInfo = `Pedido: ${orderId}\nTotal: $${Number(total || 0)}\nCliente: ${name || ""}\nEmail: ${email}\nTel: ${
+          ?.map((i) => {
+            const qty = i.qty || i.quantity || 1;
+            const price = i.price || i.unit_price || 0;
+            const line = price * qty;
+            return `<tr>
+              <td style="padding:8px 12px;border-bottom:1px solid #eee;">${i.name || i.title || "Item"}</td>
+              <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;">${qty}</td>
+              <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;">${fmt(price)}</td>
+              <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${fmt(line)}</td>
+            </tr>`;
+          })
+          .join("") || "";
+
+      const infoEnvio = `${address.street || ""} ${address.number || ""} ${address.floor || ""}<br/>${address.city || ""}, ${address.state || ""} (${address.zip || cp || ""})<br/>${pais || ""}`;
+
+      const htmlTemplate = (isClient) => `
+        <div style="font-family:Arial,sans-serif;background:#f7f7fb;padding:24px;">
+          <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.08);">
+            <div style="padding:20px 24px;border-bottom:1px solid #eee;background:linear-gradient(120deg,#fefefe,#f5f7ff);">
+              <h2 style="margin:0;color:#111;">${isClient ? "?Gracias por tu compra!" : "Nuevo pedido recibido"}</h2>
+              <p style="margin:4px 0 0;color:#555;font-size:14px;">Pedido ${orderId} ? ${new Date(payload.created_at).toLocaleString("es-AR")}</p>
+            </div>
+            <div style="padding:24px;">
+              <h3 style="margin:0 0 12px;color:#111;">Resumen</h3>
+              <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333;">
+                <thead>
+                  <tr style="background:#fafafa;">
+                    <th style="padding:8px 12px;text-align:left;">Producto</th>
+                    <th style="padding:8px 12px;text-align:center;">Cant.</th>
+                    <th style="padding:8px 12px;text-align:right;">Precio</th>
+                    <th style="padding:8px 12px;text-align:right;">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHtml}
+                  <tr>
+                    <td colspan="3" style="padding:12px;text-align:right;font-weight:600;">Total</td>
+                    <td style="padding:12px;text-align:right;font-weight:700;font-size:15px;color:#d00;">${fmt(total)}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div style="margin-top:18px;padding:14px;border:1px solid #eee;border-radius:10px;background:#fafafa;">
+                <strong style="display:block;color:#111;">Cliente</strong>
+                <div style="color:#444;font-size:13px;line-height:1.5;">
+                  ${name || ""}<br/>
+                  ${email}<br/>
+                  Tel: ${phone || "-"}<br/>
+                  Env?o: ${infoEnvio}
+                </div>
+              </div>
+
+              ${
+                notes
+                  ? `<div style="margin-top:12px;padding:12px;border-left:4px solid #ff5252;background:#fff7f7;border-radius:8px;">
+                      <strong style="color:#b40000;">Notas:</strong>
+                      <div style="color:#444;font-size:13px;line-height:1.5;">${notes}</div>
+                    </div>`
+                  : ""
+              }
+
+              <div style="margin-top:18px;color:#666;font-size:12px;line-height:1.5;">
+                ${isClient ? "En breve te confirmaremos el pago y el env?o. Si tienes dudas, respond? este mail." : "Revis? el panel admin para gestionar el pedido y el env?o."}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const textBase = `Pedido: ${orderId}
+Total: ${fmt(total)}
+Cliente: ${name || ""}
+Email: ${email}
+Tel: ${
         phone || ""
-      }\nPaís: ${pais || ""} | CP: ${cp || ""}\nNotas: ${payload.notes || ""}\nItems:\n${itemsText}`;
+      }
+Pa?s: ${pais || ""} | CP: ${cp || ""}
+Env?o: ${infoEnvio.replace(/<br\/>/g, " ")}
+Notas: ${payload.notes || ""}`;
+
       try {
         await mailer.sendMail({
           from: `"Pedidos Ganchos Blistero" <${process.env.MAIL_USER}>`,
           to: adminTo,
           subject: `Nuevo pedido ${orderId}`,
-          text: baseInfo,
+          text: textBase,
+          html: htmlTemplate(false),
         });
         await mailer.sendMail({
           from: `"Ganchos Blistero" <${process.env.MAIL_USER}>`,
           to: email,
           subject: `Recibimos tu pedido ${orderId}`,
-          text: `Gracias por tu compra.\n\n${baseInfo}\n\nTe avisaremos cuando se confirme el pago.`,
+          text: textBase,
+          html: htmlTemplate(true),
         });
       } catch (mailErr) {
         console.warn("No se pudo enviar email de pedido:", mailErr?.message || mailErr);
