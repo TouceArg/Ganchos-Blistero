@@ -379,7 +379,8 @@ router.post("/webhook", async (req, res) => {
     });
     const info = await payRes.json();
     if (!payRes.ok) {
-      console.error("MP get payment error:", info);
+      // Evita que un pago inexistente corte el flujo
+      console.warn("MP get payment error:", info);
       return res.sendStatus(200);
     }
     const orderId = info.external_reference;
