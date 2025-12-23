@@ -2,6 +2,7 @@ const { Router } = require("express");
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const { GoogleAuth } = require("google-auth-library");
 const nodemailer = require("nodemailer");
+const PDFDocument = require("pdfkit");
 require("dotenv").config();
 
 const router = Router();
@@ -300,6 +301,164 @@ router.delete("/:id", async (req, res) => {
   } catch (err) {
     console.error("Error eliminando orden:", err);
     res.status(500).json({ error: "No se pudo eliminar la orden" });
+  }
+});
+
+// Generar etiqueta PDF interna (admin)
+router.get("/label/:id", async (req, res) => {
+  if (!isAdmin(req)) return res.status(401).json({ error: "No autorizado" });
+  const { id } = req.params;
+  try {
+    const doc = await getDoc();
+    const sheet = await ensureOrderSheet(doc);
+    const rows = await sheet.getRows();
+    const row = rows.find((r) => {
+      const get = typeof r.get === "function" ? r.get.bind(r) : r;
+      return (get("order_id") || get.order_id) === id;
+    });
+    if (!row) return res.status(404).json({ error: "Orden no encontrada" });
+    const order = mapRow(row);
+    let items = [];
+    try {
+      items = JSON.parse(order.items_json || "[]");
+    } catch (e) {
+      items = [];
+    }
+
+    const docPdf = new PDFDocument({ size: "A6", margin: 10 });
+    const chunks = [];
+    docPdf.on("data", (c) => chunks.push(c));
+    docPdf.on("end", () => {
+      const pdf = Buffer.concat(chunks);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="label-${id}.pdf"`);
+      res.send(pdf);
+    });
+
+    const fmt = (n) =>
+      new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency: "ARS",
+        minimumFractionDigits: 2,
+      }).format(Number(n || 0));
+
+    const W = docPdf.page.width;
+    const H = docPdf.page.height;
+    const cardX = 8;
+    const cardY = 28;
+    const cardW = W - cardX * 2;
+    const cardH = H - cardY - 8;
+
+    // Fondo y header de marca
+    docPdf.rect(0, 0, W, H).fill("#f3f4f8");
+    docPdf.fillColor("#e53935").rect(0, 0, W, 26).fill();
+    docPdf
+      .fillColor("#fff")
+      .fontSize(12)
+      .font("Helvetica-Bold")
+      .text("Ganchos Blistero", cardX, 8, { continued: false });
+    docPdf
+      .fontSize(9)
+      .font("Helvetica")
+      .text(`Pedido ${id}`, 0, 9, { align: "right", width: W - cardX });
+
+    // Tarjeta principal
+    docPdf.save();
+    docPdf.roundedRect(cardX, cardY, cardW, cardH, 10).fill("#ffffff");
+    docPdf.restore();
+    docPdf.roundedRect(cardX, cardY, cardW, cardH, 10).stroke("#e0e0e0");
+
+    const pad = 14;
+    let y = cardY + pad;
+
+    // Título
+    docPdf.font("Helvetica-Bold").fontSize(12).fillColor("#111").text("Etiqueta de envío", cardX + pad, y);
+    y += 14;
+    docPdf.font("Helvetica").fontSize(9).fillColor("#444").text("Interna / Preparación de pedido", cardX + pad, y);
+    y += 18;
+
+    // Datos de envío en box
+    const infoLines = [
+      order.name || "Cliente",
+      order.email || "",
+      order.phone || "",
+      `${order.address_street || ""} ${order.address_floor || ""}`.trim(),
+      `${order.address_city || ""} ${order.address_state || ""} (${order.address_zip || ""})`.trim(),
+      order.address_country || "",
+    ].filter(Boolean);
+
+    const boxH = 60;
+    docPdf.save();
+    docPdf.roundedRect(cardX + pad - 4, y - 4, cardW - pad * 2 + 8, boxH, 8).fill("#f8f9fb");
+    docPdf.restore();
+    docPdf.font("Helvetica-Bold").fontSize(10).fillColor("#111").text("Enviar a:", cardX + pad, y + 2);
+    docPdf.font("Helvetica").fontSize(9).fillColor("#333").text(infoLines.join("\n"), cardX + pad, y + 14, {
+      width: cardW - pad * 2,
+    });
+    y += boxH + 8;
+
+    // Items (primeros 4)
+    docPdf.font("Helvetica-Bold").fontSize(10).fillColor("#111").text("Items:", cardX + pad, y);
+    y += 12;
+    docPdf.font("Helvetica").fontSize(9).fillColor("#333");
+    items.slice(0, 4).forEach((i, idx) => {
+      const qty = i.qty || i.quantity || 1;
+      const price = i.price || i.unit_price || 0;
+      docPdf.text(`• ${i.name || i.title || "Item"} x${qty} - ${fmt(price)}`, cardX + pad, y, {
+        width: cardW - pad * 2,
+      });
+      y += 11;
+      if (idx === 3 && items.length > 4) {
+        docPdf.text(`… +${items.length - 4} más`, cardX + pad, y);
+        y += 11;
+      }
+    });
+
+    // Total destacado
+    docPdf.save();
+    const totalBoxH = 24;
+    docPdf.roundedRect(cardX + pad - 2, y + 4, cardW - pad * 2 + 4, totalBoxH, 6).fill("#fef2f2");
+    docPdf.restore();
+    docPdf.font("Helvetica-Bold").fontSize(11).fillColor("#111").text("Total", cardX + pad, y + 8);
+    docPdf
+      .font("Helvetica-Bold")
+      .fontSize(11)
+      .fillColor("#d32f2f")
+      .text(fmt(order.total), 0, y + 8, { align: "right", width: cardW - pad });
+    y += totalBoxH + 6;
+
+    // Notas si hay
+    if (order.notes) {
+      docPdf.font("Helvetica-Bold").fontSize(10).fillColor("#b40000").text("Notas:", cardX + pad, y);
+      y += 12;
+      docPdf.font("Helvetica").fontSize(9).fillColor("#444").text(order.notes, cardX + pad, y, {
+        width: cardW - pad * 2,
+        lineGap: 2,
+      });
+      y += 26;
+    }
+
+    // Pie con ID en estilo “código”
+    const code = id.replace("ORD-", "");
+    docPdf.save();
+    docPdf.roundedRect(cardX + pad - 2, cardY + cardH - 32, cardW - pad * 2 + 4, 24, 6).fill("#111");
+    docPdf
+      .font("Helvetica-Bold")
+      .fontSize(10)
+      .fillColor("#fff")
+      .text(`ID: ${code}`, cardX + pad, cardY + cardH - 28, { align: "left" });
+    docPdf.restore();
+
+    // Leyenda
+    docPdf.font("Helvetica").fontSize(7).fillColor("#666").text("Etiqueta interna generada automáticamente", cardX, H - 12, {
+      align: "center",
+      width: W,
+    });
+
+    docPdf.end();
+  } catch (err) {
+    console.error("Error generando etiqueta:", err);
+    res.status(500).json({ error: "No se pudo generar la etiqueta" });
   }
 });
 
