@@ -54,7 +54,12 @@ function buildPackages(items = [], fallback = {}) {
     const weightKg =
       Number(it.weight_kg) ||
       (Number(it.weight_g) ? Number(it.weight_g) / 1000 : fallback.weight || defaults.weight);
-    const declaredValue = Number(it.declared_value || it.price || defaults.declaredValue);
+    const declaredValueRaw =
+      Number(it.declared_value) ||
+      Number(it.price) ||
+      Number(fallback.declaredValue || defaults.declaredValue);
+    // Si no viene valor declarado, usamos price * qty, mínimo 1
+    const declaredValue = declaredValueRaw > 0 ? declaredValueRaw : Math.max(1, Number(it.price || 0) * qty || 1);
     return {
       content: it.name || it.title || "Item",
       amount: qty,
@@ -93,6 +98,14 @@ router.post("/quote", async (req, res) => {
     const origin = buildOrigin();
     const destination = buildDestination(req.body || {});
     const packages = buildPackages(req.body?.items || [], req.body?.packageDefaults || {});
+    // Valor declarado opcional a nivel request
+    if (req.body?.declaredValue) {
+      packages.forEach((p) => {
+        if (!p.declaredValue || p.declaredValue < req.body.declaredValue) {
+          p.declaredValue = Number(req.body.declaredValue);
+        }
+      });
+    }
     const payload = { origin, destination, packages };
 
     const resp = await fetch(`${ENVIA_API_BASE}/rates`, {
@@ -122,6 +135,13 @@ router.post("/create", async (req, res) => {
     const origin = buildOrigin();
     const destination = buildDestination(req.body || {});
     const packages = buildPackages(req.body?.items || [], req.body?.packageDefaults || {});
+    if (req.body?.declaredValue) {
+      packages.forEach((p) => {
+        if (!p.declaredValue || p.declaredValue < req.body.declaredValue) {
+          p.declaredValue = Number(req.body.declaredValue);
+        }
+      });
+    }
     // el cliente debe enviar rate_id o rate seleccionado
     const rateId = req.body?.rate_id || req.body?.rateId;
     const carrier = req.body?.carrier;
