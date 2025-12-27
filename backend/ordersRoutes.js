@@ -356,7 +356,7 @@ router.get("/label/:id", async (req, res) => {
       .fillColor("#fff")
       .fontSize(12)
       .font("Helvetica-Bold")
-      .text("Ganchos Blistero", cardX, 8, { continued: false });
+      .text("Ganchos Blisteros", cardX, 8, { continued: false });
     docPdf
       .fontSize(9)
       .font("Helvetica")
@@ -387,12 +387,13 @@ router.get("/label/:id", async (req, res) => {
       order.address_country || "",
     ].filter(Boolean);
 
-    const boxH = 60;
+    const infoStr = infoLines.join("\n");
+    const boxH = Math.max(50, docPdf.heightOfString(infoStr, { width: cardW - pad * 2 }) + 22);
     docPdf.save();
     docPdf.roundedRect(cardX + pad - 4, y - 4, cardW - pad * 2 + 8, boxH, 8).fill("#f8f9fb");
     docPdf.restore();
     docPdf.font("Helvetica-Bold").fontSize(10).fillColor("#111").text("Enviar a:", cardX + pad, y + 2);
-    docPdf.font("Helvetica").fontSize(9).fillColor("#333").text(infoLines.join("\n"), cardX + pad, y + 14, {
+    docPdf.font("Helvetica").fontSize(9).fillColor("#333").text(infoStr, cardX + pad, y + 14, {
       width: cardW - pad * 2,
     });
     y += boxH + 8;
@@ -401,18 +402,23 @@ router.get("/label/:id", async (req, res) => {
     docPdf.font("Helvetica-Bold").fontSize(10).fillColor("#111").text("Items:", cardX + pad, y);
     y += 12;
     docPdf.font("Helvetica").fontSize(9).fillColor("#333");
-    items.slice(0, 4).forEach((i, idx) => {
-      const qty = i.qty || i.quantity || 1;
-      const price = i.price || i.unit_price || 0;
-      docPdf.text(`• ${i.name || i.title || "Item"} x${qty} - ${fmt(price)}`, cardX + pad, y, {
-        width: cardW - pad * 2,
-      });
+    if (!items.length) {
+      docPdf.text("• Sin items", cardX + pad, y);
       y += 11;
-      if (idx === 3 && items.length > 4) {
-        docPdf.text(`… +${items.length - 4} más`, cardX + pad, y);
+    } else {
+      items.slice(0, 4).forEach((i, idx) => {
+        const qty = i.qty || i.quantity || 1;
+        const price = i.price || i.unit_price || 0;
+        docPdf.text(`• ${i.name || i.title || "Item"} x${qty} - ${fmt(price)}`, cardX + pad, y, {
+          width: cardW - pad * 2,
+        });
         y += 11;
-      }
-    });
+        if (idx === 3 && items.length > 4) {
+          docPdf.text(`… +${items.length - 4} más`, cardX + pad, y);
+          y += 11;
+        }
+      });
+    }
 
     // Total destacado
     docPdf.save();

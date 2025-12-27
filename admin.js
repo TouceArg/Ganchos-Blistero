@@ -236,16 +236,15 @@ async function deleteOrder(id) {
 
 async function openLabel(id) {
   try {
-    const res = await fetch(`${API_BASE}/pago/label/${id}?token=${adminToken || ""}`);
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    if (data?.url) {
-      window.open(data.url, "_blank");
-    } else {
-      alert("No se encontró etiqueta para esta orden.");
-    }
+    const res = await fetch(`${API_BASE}/orders/label/${id}`, {
+      headers: { "x-admin-token": adminToken || "" },
+    });
+    if (!res.ok) throw new Error("No autorizado o sin etiqueta");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
   } catch (err) {
-    alert("No se pudo obtener la etiqueta.");
+    alert("No se pudo obtener la etiqueta interna.");
   }
 }
 
