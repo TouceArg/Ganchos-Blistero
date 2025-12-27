@@ -7,6 +7,7 @@ const { GoogleAuth } = require("google-auth-library");
 const contactRoutes = require("./contactRoutes");
 const orderRoutes = require("./ordersRoutes");
 const mpRoutes = require("./mpRoutes");
+const enviaRoutes = require("./enviaRoutes");
 const { createClient } = require("@supabase/supabase-js");
 const cloudinary = require("cloudinary").v2;
 
@@ -179,6 +180,7 @@ app.delete("/api/products/:id", async (req, res) => {
 app.use("/api/contacto", contactRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/pago", mpRoutes);
+app.use("/api/envia", enviaRoutes);
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => console.log(`API catálogo on ${port}`));
