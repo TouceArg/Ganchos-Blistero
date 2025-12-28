@@ -49,6 +49,14 @@
     .charts { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px; margin-top:16px; }
     .chart-box { background:#0c0f14; border:1px solid rgba(255,255,255,0.05); border-radius:14px; padding:12px; box-shadow:0 8px 20px rgba(0,0,0,0.18); }
     .chart-box h3 { margin:0 0 8px; font-size:14px; color:#cfd4e5; letter-spacing:0.3px; }
+    .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin:12px 0; }
+    .kpi { background:#0c0f14; border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:12px; box-shadow:0 8px 20px rgba(0,0,0,0.2); }
+    .kpi h4 { margin:0; font-size:13px; color:#9fa6b9; }
+    .kpi p { margin:4px 0 0; font-size:20px; font-weight:700; }
+    .toast { position:fixed; bottom:16px; right:16px; background:rgba(17,17,17,0.92); color:#fff; padding:12px 16px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.4); opacity:0; transform:translateY(10px); transition: all .25s ease; z-index:9999; }
+    .toast.show { opacity:1; transform:translateY(0); }
+    .skeleton { background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12), rgba(255,255,255,0.06)); background-size:200% 100%; animation: shimmer 1s infinite; border-radius:8px; }
+    @keyframes shimmer { 0%{background-position:-200% 0;}100%{background-position:200% 0;} }
     @keyframes fadeUp { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform: translateY(0);} }
     @media (max-width: 720px) {
       .panel-card { padding:16px; }
@@ -89,6 +97,9 @@
             <option value="approved">Pago aprobado</option>
             <option value="cancelled">Cancelado</option>
           </select>
+          <input type="date" id="fromDate">
+          <input type="date" id="toDate">
+          <button class="btn btn--ghost" id="clearFiltersBtn">Borrar filtros</button>
           <button class="btn btn--ghost" id="refreshBtn">Refrescar</button>
           <span class="pill" id="summaryCount">0 pedidos</span>
           <div style="display:flex;align-items:center;gap:8px;">
@@ -97,10 +108,25 @@
             <button class="btn btn--ghost" id="nextPageBtn" type="button">></button>
           </div>
         </div>
+        <div class="field-row">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn--ghost" id="bulkPending" type="button">Marcar Pendiente</button>
+            <button class="btn btn--ghost" id="bulkApproved" type="button">Marcar Aprobado</button>
+            <button class="btn btn--ghost" id="bulkCancelled" type="button">Marcar Cancelado</button>
+            <button class="btn btn--ghost" id="bulkDelete" type="button">Eliminar seleccionados</button>
+            <button class="btn btn--ghost" id="bulkExport" type="button">Exportar CSV</button>
+          </div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi"><h4>Ventas hoy</h4><p id="kpiSales">$0</p></div>
+          <div class="kpi"><h4>Pedidos pendientes</h4><p id="kpiPending">0</p></div>
+          <div class="kpi"><h4>Ticket promedio</h4><p id="kpiAvg">$0</p></div>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
+                <th><input type="checkbox" id="selectAll"></th>
                 <th>Orden</th>
                 <th>Cliente</th>
                 <th>Total</th>

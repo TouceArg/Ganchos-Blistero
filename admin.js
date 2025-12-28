@@ -6,11 +6,17 @@ const loginBtn = document.getElementById("loginBtn");
 const ordersBody = document.getElementById("ordersBody");
 const searchInput = document.getElementById("searchInput");
 const statusFilter = document.getElementById("statusFilter");
+const fromDate = document.getElementById("fromDate");
+const toDate = document.getElementById("toDate");
+const clearFiltersBtn = document.getElementById("clearFiltersBtn");
 const refreshBtn = document.getElementById("refreshBtn");
 const summaryCount = document.getElementById("summaryCount");
 const statusChartEl = document.getElementById("statusChart");
 const dailyChartEl = document.getElementById("dailyChart");
 const topItemsChartEl = document.getElementById("topItemsChart");
+const kpiSales = document.getElementById("kpiSales");
+const kpiPending = document.getElementById("kpiPending");
+const kpiAvg = document.getElementById("kpiAvg");
 // Productos
 const pName = document.getElementById("pName");
 const pPrice = document.getElementById("pPrice");
@@ -46,6 +52,7 @@ let dailyChart;
 let topItemsChart;
 let editingId = null;
 let currentPage = 1;
+let selectedOrders = new Set();
 
 function formatAddress(o) {
   const lines = [];
