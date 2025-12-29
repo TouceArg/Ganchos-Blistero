@@ -153,6 +153,7 @@ router.post("/create", async (req, res) => {
       packages,
       labelFormat: "pdf",
     };
+    if (req.body?.reference) payload.reference = req.body.reference;
     if (rateId) payload.rateId = rateId;
     if (carrier) payload.carrier = carrier;
     if (service) payload.service = service;
@@ -174,6 +175,61 @@ router.post("/create", async (req, res) => {
   } catch (err) {
     console.error("Error creando guia Envia:", err);
     res.status(500).json({ error: "No se pudo generar la guia" });
+  }
+});
+
+// Webhook de status Envia
+router.post("/webhook", async (req, res) => {
+  try {
+    // Seguridad bÃ¡sica por header si el cliente lo configurÃ³
+    const secret = process.env.ENVIA_WEBHOOK_SECRET;
+    if (secret) {
+      const provided =
+        req.headers["x-api-key"] ||
+        req.headers["x-envia-signature"] ||
+        req.headers["x-signature"];
+      if (!provided || String(provided) !== String(secret)) {
+        return res.status(401).json({ error: "No autorizado" });
+      }
+    }
+
+    const payload = req.body || {};
+    const { shipment_id, tracking_number, status, substatus, tracking_url, reference } = payload;
+    console.log("Webhook Envia", { shipment_id, tracking_number, status, substatus, reference });
+
+    // Si no hay referencia, nada que hacer
+    if (!reference) return res.status(200).json({ ok: true });
+
+    // Map de estados
+    const mapStatus = (s) => {
+      const val = (s || "").toLowerCase();
+      if (["delivered"].includes(val)) return "approved";
+      if (["cancelled"].includes(val)) return "cancelled";
+      if (["exception"].includes(val)) return "pending";
+      return "pending";
+    };
+
+    // Actualizar hoja de orders
+    try {
+      const ordersRoutes = require("./ordersRoutes");
+      if (typeof ordersRoutes._updateShippingFromWebhook === "function") {
+        await ordersRoutes._updateShippingFromWebhook({
+          reference,
+          shipment_id,
+          tracking_number,
+          tracking_url,
+          status,
+          mappedStatus: mapStatus(status),
+        });
+      }
+    } catch (e) {
+      console.error("No se pudo actualizar order desde webhook:", e?.message || e);
+    }
+
+    res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error("Error en webhook Envia:", err);
+    res.status(500).json({ error: "error" });
   }
 });
 

@@ -43,6 +43,10 @@ function mapRow(row) {
     status: get("status") || "pending",
     items_json: get("items_json") || "[]",
     notes: get("notes") || "",
+    tracking_url: get("tracking_url") || "",
+    tracking_number: get("tracking_number") || "",
+    shipping_status: get("shipping_status") || "",
+    shipment_id: get("shipment_id") || "",
   };
 }
 
@@ -84,6 +88,10 @@ async function ensureOrderSheet(doc) {
       "status",
       "items_json",
       "notes",
+      "tracking_url",
+      "tracking_number",
+      "shipping_status",
+      "shipment_id",
     ],
   });
 }
@@ -130,6 +138,10 @@ router.post("/", async (req, res) => {
       status: "pending",
       items_json: JSON.stringify(items),
       notes: notes || `Pais: ${pais || ""} | CP: ${cp || ""}`,
+      tracking_url: "",
+      tracking_number: "",
+      shipping_status: "",
+      shipment_id: "",
     };
     await sheet.addRow(payload);
 
@@ -467,5 +479,32 @@ router.get("/label/:id", async (req, res) => {
     res.status(500).json({ error: "No se pudo generar la etiqueta" });
   }
 });
+
+// Helper usado por webhook de Envia
+router._updateShippingFromWebhook = async ({
+  reference,
+  shipment_id,
+  tracking_number,
+  tracking_url,
+  status,
+  mappedStatus,
+}) => {
+  const doc = await getDoc();
+  const sheet = await ensureOrderSheet(doc);
+  const rows = await sheet.getRows();
+  const row = rows.find((r) => {
+    const get = typeof r.get === "function" ? r.get.bind(r) : r;
+    return (get("order_id") || get.order_id) === reference;
+  });
+  if (!row) throw new Error("Orden no encontrada para referencia " + reference);
+  if (tracking_url) row.set("tracking_url", tracking_url);
+  if (tracking_number) row.set("tracking_number", tracking_number);
+  if (shipment_id) row.set("shipment_id", shipment_id);
+  if (status) row.set("shipping_status", status);
+  if (mappedStatus && row.get("status") !== mappedStatus) {
+    row.set("status", mappedStatus);
+  }
+  await row.save();
+};
 
 module.exports = router;

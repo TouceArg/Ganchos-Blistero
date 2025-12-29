@@ -1,0 +1,54 @@
+Ganchos Blisteros – ficha técnica
+===============================
+
+Stack y hosting
+---------------
+- Frontend estático (Netlify): index.html, catalogo.html, checkout.html, contacto.html, styles.css, app.js, admin.html, admin.js.
+- Backend Node/Express (Railway): server.js, ordersRoutes.js, mpRoutes.js, contactRoutes.js, products, upload-image, Envia.
+- CDN/almacenamiento: Cloudinary para imágenes; Supabase (tabla products) para catálogo; localStorage en frontend para carrito y token admin.
+
+Integraciones clave
+-------------------
+- Mercado Pago: checkout Pro, creación de preferencias desde frontend; webhook/consultas en mpRoutes.js; tracking y label interno disponible en ordersRoutes.js; estados pending/approved/cancelled.
+- Envíos: Envia API (enviaRoutes.js) con endpoints /api/envia/quote y /api/envia/create, requiere ENVIA_API_KEY + origen/dimensiones. Mercado Envíos se dejó en pausa.
+- SMTP: envío de correos vía Gmail (STARTTLS 587) desde ordersRoutes.js. Vars MAIL_USER/MAIL_PASS/DEST_EMAIL.
+
+Flujos principales
+------------------
+- Catálogo (app.js): fetch a /api/catalogo (Railway). Sanitiza imágenes/colores, render cards, modal, combos. Carrito persistido en localStorage `gb-cart`. En checkout calcula envío gratis desde $20.000 y llama a PAY_URL (MP preferencia).
+- Checkout (checkout.html/app.js): 3 pasos; botón de pago sólo si datos válidos. Muestra envío "Calculado en MP". Post-pago consulta /api/pago/check/:order para estado.
+- Admin (admin.html/admin.js): login por token admin. Listado con filtros texto/estado/fecha, paginación, KPI, gráficos Chart.js. Acciones: editar notas/estado, borrar, imprimir etiqueta interna, ver tracking, bulk status/delete/export CSV. Productos: CRUD + duplicar, publicar/ocultar, peso y dimensiones para cotizaciones; subida de imagen (Cloudinary) o URL.
+
+Etiquetas y PDF
+---------------
+- Etiqueta interna en /api/orders/label/:id (ordersRoutes.js, PDFKit A6): marca Ganchos Blisteros, dirección, items, total, notas. Protegido con x-admin-token.
+
+Variables de entorno principales
+--------------------------------
+- ADMIN_TOKEN
+- SUPABASE_URL, SUPABASE_KEY, SUPABASE_TABLE
+- CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+- MP_ACCESS_TOKEN, MP_PUBLIC_KEY
+- MAIL_USER, MAIL_PASS, DEST_EMAIL
+- ENVIA_API_KEY, ENVIA_ORIGIN_* (name, street, city, state, zip, country), ENVIA_PKG_WEIGHT/DEPTH/HEIGHT/WIDTH (defaults)
+
+Archivos editados relevantes
+----------------------------
+- admin.js/admin.html: filtros, KPI, acciones masivas, selección de órdenes, export CSV, UI animada.
+- ordersRoutes.js: PDF interno mejorado, SMTP 587, branding.
+- enviaRoutes.js: cotizar y crear guías Envia.
+- server.js: monta rutas Envia.
+- package-lock/dep: pdfkit añadido.
+
+Para desplegar
+--------------
+- Backend (Railway): asegurarse `npm install` o `npm ci` en carpeta backend; comando start en package.json. Setear env vars anteriores. Dominio prod: https://ganchos-blistero-production.up.railway.app
+- Frontend (Netlify): build estático (no build step). Variables PAY_URL/API_URL apuntando a Railway si aplica.
+
+Notas operativas
+----------------
+- Token admin se guarda en localStorage `gb-admin-token`.
+- Acciones masivas requieren seleccionar filas (checkbox) o selectAll.
+- Envia necesita cuenta verificada y origen configurado; cotización usa peso/dimensiones del pedido (fallback env defaults) y declaredValue del total.
+- Mercado Envíos puede mantenerse como alternativa, pero actualmente orientado a Envia.
+

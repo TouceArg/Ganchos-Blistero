@@ -17,6 +17,12 @@ const topItemsChartEl = document.getElementById("topItemsChart");
 const kpiSales = document.getElementById("kpiSales");
 const kpiPending = document.getElementById("kpiPending");
 const kpiAvg = document.getElementById("kpiAvg");
+const selectAll = document.getElementById("selectAll");
+const bulkPending = document.getElementById("bulkPending");
+const bulkApproved = document.getElementById("bulkApproved");
+const bulkCancelled = document.getElementById("bulkCancelled");
+const bulkDelete = document.getElementById("bulkDelete");
+const bulkExport = document.getElementById("bulkExport");
 // Productos
 const pName = document.getElementById("pName");
 const pPrice = document.getElementById("pPrice");
@@ -53,6 +59,12 @@ let topItemsChart;
 let editingId = null;
 let currentPage = 1;
 let selectedOrders = new Set();
+let currentPageIds = [];
+let toastTimer;
+
+const toast = document.createElement("div");
+toast.className = "toast";
+document.body.appendChild(toast);
 
 function formatAddress(o) {
   const lines = [];
@@ -82,6 +94,12 @@ function renderOrders() {
   if (!ordersBody) return;
   const term = (searchInput?.value || "").toLowerCase();
   const status = statusFilter?.value || "";
+  const from = fromDate?.value ? new Date(fromDate.value) : null;
+  const to = toDate?.value ? new Date(`${toDate.value}T23:59:59`) : null;
+  // Limpio seleccion que ya no existe
+  const validIds = new Set(orders.map((o) => o.order_id));
+  selectedOrders = new Set([...selectedOrders].filter((id) => validIds.has(id)));
+
   const filtered = orders
     .slice()
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
@@ -91,17 +109,33 @@ function renderOrders() {
         (o.email || "").toLowerCase().includes(term) ||
         (o.order_id || "").toLowerCase().includes(term);
       const matchStatus = !status || o.status === status;
-      return matchTerm && matchStatus;
+      const d = o.created_at ? new Date(o.created_at) : null;
+      const matchDate =
+        (!from && !to) ||
+        (d && (from ? d >= from : true) && (to ? d <= to : true));
+      return matchTerm && matchStatus && matchDate;
     });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   currentPage = Math.min(currentPage, totalPages);
   const start = (currentPage - 1) * PAGE_SIZE;
   const pageItems = filtered.slice(start, start + PAGE_SIZE);
+  currentPageIds = pageItems.map((o) => o.order_id);
 
   summaryCount.textContent = `${filtered.length} pedidos`;
-  if (pageInfo) pageInfo.textContent = `Pág ${currentPage}/${totalPages}`;
+  if (pageInfo) pageInfo.textContent = `Pag ${currentPage}/${totalPages}`;
   if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
   if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+
+  // KPIs
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todaySales = filtered
+    .filter((o) => (o.created_at || "").startsWith(todayStr))
+    .reduce((acc, o) => acc + Number(o.total || 0), 0);
+  const pendingCount = filtered.filter((o) => o.status === "pending").length;
+  const avg = filtered.length > 0 ? filtered.reduce((acc, o) => acc + Number(o.total || 0), 0) / filtered.length : 0;
+  if (kpiSales) kpiSales.textContent = formatCurrency(todaySales);
+  if (kpiPending) kpiPending.textContent = pendingCount;
+  if (kpiAvg) kpiAvg.textContent = formatCurrency(avg);
 
   ordersBody.innerHTML = pageItems
     .map((o) => {
@@ -109,6 +143,9 @@ function renderOrders() {
       const isPickup = (o.notes || "").toLowerCase().includes("retiro en local");
       return `
         <tr>
+          <td><input type="checkbox" class="row-check" data-id="${o.order_id}" ${
+            selectedOrders.has(o.order_id) ? "checked" : ""
+          }></td>
           <td>
             <div><strong>${o.order_id || "-"}</strong></div>
             <div class="notes">${new Date(o.created_at || Date.now()).toLocaleString()}</div>
@@ -134,8 +171,8 @@ function renderOrders() {
             <textarea rows="2" data-notes="${o.order_id}" class="notes-input">${o.notes || ""}</textarea>
             <button class="btn btn--ghost" data-save="${o.order_id}" style="margin-top:6px;">Guardar</button>
             <button class="btn btn--ghost" data-del="${o.order_id}" style="margin-top:6px;">Eliminar</button>
-        <button class="btn btn--ghost" data-label="${o.order_id}" style="margin-top:6px;">Imprimir etiqueta</button>
-        <button class="btn btn--ghost" data-track="${o.order_id}" style="margin-top:6px;">Ver tracking</button>
+            <button class="btn btn--ghost" data-label="${o.order_id}" style="margin-top:6px;">Imprimir etiqueta</button>
+            <button class="btn btn--ghost" data-track="${o.order_id}" style="margin-top:6px;">Ver tracking</button>
             ${isPickup ? '<div class="pill" style="margin-top:6px;background:rgba(59,209,111,0.18);color:#3bd16f;">Retiro en local</div>' : ""}
           </td>
         </tr>
@@ -145,7 +182,6 @@ function renderOrders() {
   wireActions();
   updateCharts(filtered);
 }
-
 function safeItems(str) {
   try {
     return JSON.parse(str || "[]");
@@ -206,6 +242,18 @@ function wireActions() {
       await openTracking(id, btn);
     });
   });
+  document.querySelectorAll(".row-check").forEach((chk) => {
+    chk.addEventListener("change", () => {
+      const id = chk.dataset.id;
+      if (chk.checked) {
+        selectedOrders.add(id);
+      } else {
+        selectedOrders.delete(id);
+      }
+      updateSelectAllState();
+    });
+  });
+  updateSelectAllState();
 }
 
 async function updateOrder(id, payload) {
@@ -729,3 +777,121 @@ tabProducts?.addEventListener("click", () => {
   tabOrders?.classList.add("btn--ghost");
   fetchProducts();
 });
+
+// ---------- Selecciones masivas ----------
+selectAll?.addEventListener("change", () => {
+  if (!currentPageIds.length) return;
+  if (selectAll.checked) {
+    currentPageIds.forEach((id) => selectedOrders.add(id));
+  } else {
+    currentPageIds.forEach((id) => selectedOrders.delete(id));
+  }
+  renderOrders();
+});
+
+async function bulkStatus(status) {
+  const ids = Array.from(selectedOrders);
+  if (!ids.length) return showToast("Selecciona al menos una orden");
+  await Promise.all(
+    ids.map((id) =>
+      fetch(`${API_BASE}/orders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-admin-token": adminToken },
+        body: JSON.stringify({ status }),
+      })
+    )
+  );
+  showToast(`Estado actualizado (${status})`);
+  await fetchOrders();
+}
+
+async function bulkDeleteOrders() {
+  const ids = Array.from(selectedOrders);
+  if (!ids.length) return showToast("Selecciona al menos una orden");
+  if (!confirm(`Eliminar ${ids.length} pedido(s)?`)) return;
+  await Promise.all(
+    ids.map((id) =>
+      fetch(`${API_BASE}/orders/${id}`, {
+        method: "DELETE",
+        headers: { "x-admin-token": adminToken },
+      })
+    )
+  );
+  selectedOrders.clear();
+  showToast("Pedidos eliminados");
+  await fetchOrders();
+}
+
+function bulkExportCsv() {
+  const ids = Array.from(selectedOrders);
+  if (!ids.length) return showToast("Selecciona al menos una orden");
+  const byId = new Map(orders.map((o) => [o.order_id, o]));
+  const rows = ids.map((id) => byId.get(id)).filter(Boolean);
+  if (!rows.length) return showToast("No hay datos para exportar");
+  const header = [
+    "order_id",
+    "nombre",
+    "email",
+    "telefono",
+    "total",
+    "estado",
+    "creado",
+    "notas",
+    "items",
+  ];
+  const csv = [
+    header.join(","),
+    ...rows.map((o) => {
+      const items = safeItems(o.items_json)
+        .map((i) => `${(i.title || i.name || "").replace(/,/g, " ")} x${i.quantity || i.qty || 1}`)
+        .join(" | ");
+      const cols = [
+        o.order_id || "",
+        (o.name || "").replace(/,/g, " "),
+        (o.email || "").replace(/,/g, " "),
+        (o.phone || "").replace(/,/g, " "),
+        o.total || "",
+        o.status || "",
+        o.created_at || "",
+        (o.notes || "").replace(/,/g, " "),
+        items,
+      ];
+      return cols.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",");
+    }),
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `pedidos-${Date.now()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("CSV generado");
+}
+
+bulkPending?.addEventListener("click", () => bulkStatus("pending"));
+bulkApproved?.addEventListener("click", () => bulkStatus("approved"));
+bulkCancelled?.addEventListener("click", () => bulkStatus("cancelled"));
+bulkDelete?.addEventListener("click", bulkDeleteOrders);
+bulkExport?.addEventListener("click", bulkExportCsv);
+
+function updateSelectAllState() {
+  if (!selectAll) return;
+  const checks = Array.from(document.querySelectorAll(".row-check"));
+  if (!checks.length) {
+    selectAll.checked = false;
+    selectAll.indeterminate = false;
+    return;
+  }
+  const checkedCount = checks.filter((c) => c.checked).length;
+  selectAll.checked = checkedCount === checks.length;
+  selectAll.indeterminate = checkedCount > 0 && checkedCount < checks.length;
+}
+
+function showToast(message = "") {
+  if (!toast) return alert(message);
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+}
