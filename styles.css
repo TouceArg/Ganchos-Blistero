@@ -1027,6 +1027,13 @@ button:active { transform: translateY(0); }
   font-size: 30px;
   font-weight: 700;
 }
+.about__card .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+}
 
 .contact {
   display: grid;

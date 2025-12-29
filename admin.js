@@ -33,6 +33,7 @@ const pDescription = document.getElementById("pDescription");
 const pImageUrl = document.getElementById("pImageUrl");
 const pImageFile = document.getElementById("pImageFile");
 const uploadImageBtn = document.getElementById("uploadImageBtn");
+const pColor = document.getElementById("pColor");
 const pWeight = document.getElementById("pWeight");
 const pLength = document.getElementById("pLength");
 const pWidth = document.getElementById("pWidth");
@@ -68,13 +69,13 @@ document.body.appendChild(toast);
 
 function formatAddress(o) {
   const lines = [];
-  if (o.address_street) lines.push(`Calle y nÃºmero: ${o.address_street}`);
+  if (o.address_street) lines.push(`Calle y número: ${o.address_street}`);
   if (o.address_floor) lines.push(`Piso/Depto: ${o.address_floor}`);
   if (o.address_city) lines.push(`Ciudad: ${o.address_city}`);
   if (o.address_state) lines.push(`Provincia: ${o.address_state}`);
-  if (o.address_country) lines.push(`PaÃ­s: ${o.address_country}`);
+  if (o.address_country) lines.push(`Paí­s: ${o.address_country}`);
   if (o.address_zip) lines.push(`CP: ${o.address_zip}`);
-  return lines.length ? lines.join("<br>") : "Sin direcciÃ³n";
+  return lines.length ? lines.join("<br>") : "Sin dirección declarada";
 }
 
 function setVisible(el, show) {
@@ -140,7 +141,7 @@ function renderOrders() {
   ordersBody.innerHTML = pageItems
     .map((o) => {
       const items = safeItems(o.items_json);
-      const isPickup = (o.notes || "").toLowerCase().includes("retiro en local");
+      const isPickup = (o.notes || "").toLowerCase().includes("Retiro en local");
       return `
         <tr>
           <td><input type="checkbox" class="row-check" data-id="${o.order_id}" ${
@@ -540,6 +541,8 @@ async function saveProduct() {
     const type = pType?.value || "product";
     const badge = pBadge?.value.trim();
     const description = pDescription?.value.trim();
+    const colorName = (pColor?.value || "Negro").trim() || "Negro";
+    const colorHex = colorName.toLowerCase() === "blanco" ? "#f3f3f3" : "#111";
     const weight = Number(pWeight?.value || 0);
     const length = Number(pLength?.value || 0);
     const width = Number(pWidth?.value || 0);
@@ -569,6 +572,7 @@ async function saveProduct() {
       badge,
       description,
       images: imageUrl ? [imageUrl] : [],
+      colors: [{ name: colorName, hex: colorHex }],
     };
     if (weight) payload.weight_g = weight;
     if (length) payload.length_cm = length;
@@ -602,6 +606,7 @@ function resetProductForm() {
   pBadge.value = "";
   pDescription.value = "";
   pImageUrl.value = "";
+  if (pColor) pColor.value = "Negro";
   if (pWeight) pWeight.value = "";
   if (pLength) pLength.value = "";
   if (pWidth) pWidth.value = "";
@@ -611,7 +616,7 @@ function resetProductForm() {
 }
 
 async function deleteProduct(id) {
-  if (!confirm("Â¿Eliminar este producto?")) return;
+  if (!confirm("¿Eliminar este producto?")) return;
   try {
     const res = await fetch(`${API_BASE}/products/${id}`, {
       method: "DELETE",
@@ -635,6 +640,10 @@ function startEditProduct(id) {
   pBadge.value = p.badge || "";
   pDescription.value = p.description || "";
   pImageUrl.value = Array.isArray(p.images) && p.images[0] ? p.images[0] : "";
+  if (pColor) {
+    const c = Array.isArray(p.colors) && p.colors[0] ? p.colors[0].name : "Negro";
+    pColor.value = c && c.toLowerCase() === "blanco" ? "Blanco" : "Negro";
+  }
   if (pWeight) pWeight.value = p.weight_g || "";
   if (pLength) pLength.value = p.length_cm || "";
   if (pWidth) pWidth.value = p.width_cm || "";
@@ -669,12 +678,13 @@ function renderProductsList() {
       const weightLabel = p.weight_g ? `${p.weight_g} g` : "sin peso";
       const hasDims = p.length_cm || p.width_cm || p.height_cm;
       const dims = hasDims ? `${p.length_cm || "-"}x${p.width_cm || "-"}x${p.height_cm || "-"} cm` : "";
+      const colorLabel = Array.isArray(p.colors) && p.colors[0] ? p.colors[0].name : "Sin color";
       return `<div class="product-row">
         <div class="product-row__media">${img}</div>
         <div class="product-row__info">
           <div class="product-row__title">${p.name || "-"}</div>
           <div class="product-row__meta">${p.size || ""} - ${p.type || ""} - ${formatCurrency(p.price || 0)}</div>
-          <div class="product-row__meta">Peso: ${weightLabel}${dims ? ` · ${dims}` : ""}</div>
+          <div class="product-row__meta">Color: ${colorLabel} · Peso: ${weightLabel}${dims ? ` · ${dims}` : ""}</div>
           <div class="product-row__desc">${p.description || ""}</div>
           <div class="product-row__status ${hidden ? "status-pill status-pill--off" : "status-pill status-pill--on"}">${status}${hidden ? " · No se muestra en catálogo" : ""}</div>
         </div>

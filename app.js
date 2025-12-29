@@ -225,7 +225,7 @@ function renderCatalog() {
           : `<span class="card__label">${p.imageLabel || (p.name?.charAt(0) || "G")}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
-      <h3 class="card__title">${p.name}</h3>
+      <h3 class="card__title">${p.name}${p.colors && p.colors.length === 1 && p.colors[0].name ? ` [${p.colors[0].name.toUpperCase()}]` : ""}</h3>
       <p class="card__desc">${p.description}</p>
       <div class="swatches">
         ${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${c.name}"></span>`).join("")}
@@ -263,7 +263,7 @@ function renderFeatured() {
           : `<span class="card__label">${p.imageLabel || (p.name?.charAt(0) || "G")}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
-      <h3 class="card__title">${p.name}</h3>
+      <h3 class="card__title">${p.name}${p.colors && p.colors.length === 1 && p.colors[0].name ? ` [${p.colors[0].name.toUpperCase()}]` : ""}</h3>
       <p class="card__desc">${p.description}</p>
       <div class="swatches">
         ${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${c.name}"></span>`).join("")}
@@ -300,7 +300,7 @@ function renderCombos() {
           : `<span class="card__label">${p.imageLabel || (p.name?.charAt(0) || "G")}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
-      <h3 class="card__title">${p.name}</h3>
+      <h3 class="card__title">${p.name}${p.colors && p.colors.length === 1 && p.colors[0].name ? ` [${p.colors[0].name.toUpperCase()}]` : ""}</h3>
       <p class="card__desc">${p.description}</p>
       <div class="swatches">
         ${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${c.name}"></span>`).join("")}
@@ -555,7 +555,7 @@ function renderProductModal(product) {
     <div class="modal__header">
       <div>
         <div class="section__eyebrow">${product.badge}</div>
-        <h3 class="section__title" style="margin:6px 0 0;">${product.name}</h3>
+        <h3 class="section__title" style="margin:6px 0 0;">${product.name}${product.colors && product.colors[modalColorIndex]?.name ? ` [${product.colors[modalColorIndex].name.toUpperCase()}]` : ""}</h3>
         <p class="section__subtitle" style="margin:4px 0 0;">${product.description}</p>
       </div>
       <button class="ghost-btn" onclick="closeProductModal()">Cerrar</button>
