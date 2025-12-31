@@ -101,6 +101,7 @@ let activeFilter = "all";
 let modalColorIndex = 0;
 let modalImageIndex = 0;
 let searchTerm = "";
+let shippingEstimateTimer = null;
 
 const catalogGrid = document.getElementById("catalogGrid");
 const featuredGrid = document.getElementById("featuredGrid");
@@ -663,6 +664,30 @@ async function fetchShippingEstimate(subtotal) {
   }
 }
 
+function scheduleShippingEstimate() {
+  if (pickupToggle?.checked) {
+    shippingEstimate = 0;
+    renderCart();
+    renderCheckoutSummary();
+    return;
+  }
+  const items = Object.values(cart);
+  const subtotal = items.reduce((acc, i) => acc + i.qty * i.price, 0);
+  if (!subtotal || !cpInput?.value?.trim()) return;
+  shippingEstimate = null;
+  renderCart();
+  renderCheckoutSummary();
+  if (shippingEstimateTimer) clearTimeout(shippingEstimateTimer);
+  shippingEstimateTimer = setTimeout(async () => {
+    const estimate = await fetchShippingEstimate(subtotal);
+    if (estimate !== null) {
+      shippingEstimate = estimate;
+      renderCart();
+      renderCheckoutSummary();
+    }
+  }, 600);
+}
+
 async function handleCheckout() {
   if (!isCheckoutReady()) {
     alert("Completa email, telefono, calle y numero, y codigo postal antes de enviar.");
@@ -759,18 +784,14 @@ document.addEventListener("DOMContentLoaded", () => {
   [emailInput, paisSelect, cpInput, nombreInput, telInput, calleInput, numeroInput, pisoInput, ciudadInput, provinciaInput].forEach(el => {
     if (el) el.addEventListener("input", () => {
       if (el === cpInput || el === paisSelect || el === calleInput || el === numeroInput || el === ciudadInput || el === provinciaInput) {
-        shippingEstimate = null;
-        renderCart();
-        renderCheckoutSummary();
+        scheduleShippingEstimate();
       }
       updatePayButtonState();
     });
   });
   if (pickupToggle) {
     pickupToggle.addEventListener("change", () => {
-      shippingEstimate = pickupToggle.checked ? 0 : null;
-      renderCart();
-      renderCheckoutSummary();
+      scheduleShippingEstimate();
       updatePayButtonState();
     });
   }
