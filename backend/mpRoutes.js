@@ -12,6 +12,14 @@ const DOC_CACHE_TTL_MS = 5 * 60 * 1000;
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
 const MP_API_BASE = "https://api.mercadopago.com";
 const ML_API_BASE = "https://api.mercadolibre.com";
+const ENVIA_API_KEY = process.env.ENVIA_API_KEY || "";
+const ENVIA_API_BASE = process.env.ENVIA_API_BASE || "https://api.envia.com/ship";
+const ENVIA_DEFAULTS = {
+  length: Number(process.env.ENVIA_PKG_LENGTH || 12),
+  width: Number(process.env.ENVIA_PKG_WIDTH || 10),
+  height: Number(process.env.ENVIA_PKG_HEIGHT || 5),
+  weight: Number(process.env.ENVIA_PKG_WEIGHT || 0.2), // kg
+};
 
 let cachedDoc = null;
 let cachedDocAt = 0;
@@ -56,6 +64,31 @@ async function ensureOrderSheet(doc) {
       "notes",
     ],
   });
+}
+
+function mapOrderRow(row) {
+  const get = (key) => (typeof row.get === "function" ? row.get(key) : row[key]);
+  return {
+    order_id: get("order_id"),
+    created_at: get("created_at"),
+    name: get("name"),
+    email: get("email"),
+    phone: get("phone"),
+    address_street: get("address_street"),
+    address_floor: get("address_floor"),
+    address_city: get("address_city"),
+    address_state: get("address_state"),
+    address_country: get("address_country"),
+    address_zip: get("address_zip"),
+    total: Number(get("total") || 0),
+    status: get("status") || "pending",
+    items_json: get("items_json") || "[]",
+    notes: get("notes") || "",
+    tracking_url: get("tracking_url") || "",
+    tracking_number: get("tracking_number") || "",
+    shipping_status: get("shipping_status") || "",
+    shipment_id: get("shipment_id") || "",
+  };
 }
 
 async function updateOrderStatus(orderId, status, notes) {
@@ -128,6 +161,188 @@ async function fetchMerchantOrderShipment(payment) {
 function buildShipments(body = {}) {
   // ME2 deshabilitado: no enviamos bloque de envios a MP
   return null;
+}
+
+function buildEnviaOrigin() {
+  return {
+    name: process.env.ENVIA_ORIGIN_NAME || process.env.ENVIA_ORIGIN_COMPANY || "Ganchos Blisteros",
+    company: process.env.ENVIA_ORIGIN_COMPANY || process.env.ENVIA_ORIGIN_NAME || "Ganchos Blisteros",
+    email: process.env.ENVIA_ORIGIN_EMAIL || process.env.MAIL_USER || "",
+    phone: process.env.ENVIA_ORIGIN_PHONE || "",
+    street: process.env.ENVIA_ORIGIN_STREET || "",
+    number: process.env.ENVIA_ORIGIN_NUMBER || "",
+    district: process.env.ENVIA_ORIGIN_DISTRICT || "",
+    city: process.env.ENVIA_ORIGIN_CITY || "",
+    state: process.env.ENVIA_ORIGIN_STATE || "",
+    country: process.env.ENVIA_ORIGIN_COUNTRY || "AR",
+    postalCode: process.env.ENVIA_ORIGIN_ZIP || "",
+    reference: process.env.ENVIA_ORIGIN_REF || "",
+  };
+}
+
+function buildEnviaDestination(body = {}) {
+  const addr = body.address || {};
+  return {
+    name: addr.name || body.name || "",
+    company: addr.company || "",
+    email: addr.email || body.email || "",
+    phone: addr.phone || body.phone || "",
+    street: addr.street || body.calle || "",
+    number: addr.number || body.numero || "",
+    district: addr.district || "",
+    city: addr.city || body.city || addr.city || "",
+    state: addr.state || body.state || body.provincia || "",
+    country: addr.country || body.pais || "AR",
+    postalCode: addr.zip || addr.postalCode || body.cp || "",
+    reference: addr.reference || "",
+  };
+}
+
+function buildEnviaPackages(items = []) {
+  if (!Array.isArray(items) || !items.length) {
+    return [
+      {
+        content: "Ganchos",
+        amount: 1,
+        type: "box",
+        length: ENVIA_DEFAULTS.length,
+        width: ENVIA_DEFAULTS.width,
+        height: ENVIA_DEFAULTS.height,
+        weight: ENVIA_DEFAULTS.weight,
+        declaredValue: 1,
+      },
+    ];
+  }
+  return items.map((it) => {
+    const qty = Number(it.quantity || it.qty || 1);
+    const length = Number(it.length || it.length_cm || ENVIA_DEFAULTS.length);
+    const width = Number(it.width || it.width_cm || ENVIA_DEFAULTS.width);
+    const height = Number(it.height || it.height_cm || ENVIA_DEFAULTS.height);
+    const weight =
+      Number(it.weight_kg) ||
+      (Number(it.weight_g) ? Number(it.weight_g) / 1000 : ENVIA_DEFAULTS.weight);
+    const declaredValue = Math.max(1, Number(it.price || it.unit_price || 0) * qty || 1);
+    return {
+      content: it.name || it.title || "Item",
+      amount: qty,
+      type: "box",
+      length,
+      width,
+      height,
+      weight: weight || ENVIA_DEFAULTS.weight,
+      declaredValue,
+    };
+  });
+}
+
+async function getOrderById(orderId) {
+  const doc = await getDoc();
+  const sheet = await ensureOrderSheet(doc);
+  const rows = await sheet.getRows();
+  const row = rows.find((r) => {
+    const get = typeof r.get === "function" ? r.get.bind(r) : r;
+    return (get("order_id") || get.order_id) === orderId;
+  });
+  return row ? mapOrderRow(row) : null;
+}
+
+async function updateOrderShipping(orderId, data = {}) {
+  const doc = await getDoc();
+  const sheet = await ensureOrderSheet(doc);
+  const rows = await sheet.getRows();
+  const row = rows.find((r) => {
+    const get = typeof r.get === "function" ? r.get.bind(r) : r;
+    return (get("order_id") || get.order_id) === orderId;
+  });
+  if (!row) return false;
+  if (data.tracking_url !== undefined) row.set("tracking_url", data.tracking_url || "");
+  if (data.tracking_number !== undefined) row.set("tracking_number", data.tracking_number || "");
+  if (data.shipment_id !== undefined) row.set("shipment_id", data.shipment_id || "");
+  if (data.shipping_status !== undefined) row.set("shipping_status", data.shipping_status || "");
+  if (data.status !== undefined) row.set("status", data.status || row.get("status") || "pending");
+  if (data.notesAppend) {
+    const prev = row.get("notes") || "";
+    const exists = prev.includes(data.notesAppend);
+    row.set("notes", exists ? prev : `${prev ? `${prev} | ` : ""}${data.notesAppend}`);
+  }
+  await row.save();
+  return true;
+}
+
+async function createEnviaShipmentForOrder(orderId) {
+  if (!ENVIA_API_KEY) return { ok: false, reason: "ENVIA_API_KEY missing" };
+  const order = await getOrderById(orderId);
+  if (!order) return { ok: false, reason: "order_not_found" };
+  if (order.shipment_id) return { ok: true, skipped: true, shipment_id: order.shipment_id };
+  const items = (() => {
+    try {
+      return JSON.parse(order.items_json || "[]");
+    } catch (_) {
+      return [];
+    }
+  })();
+  const payload = {
+    origin: buildEnviaOrigin(),
+    destination: {
+      name: order.name || "",
+      company: "",
+      email: order.email || "",
+      phone: order.phone || "",
+      street: order.address_street || "",
+      number: "",
+      district: "",
+      city: order.address_city || "",
+      state: order.address_state || "",
+      country: order.address_country || "AR",
+      postalCode: order.address_zip || "",
+      reference: order.address_floor || "",
+    },
+    packages: buildEnviaPackages(items),
+    reference: order.order_id,
+    labelFormat: "pdf",
+  };
+  const resp = await fetch(`${ENVIA_API_BASE}/generate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${ENVIA_API_KEY}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    console.error("Envia generate error:", data);
+    return { ok: false, reason: "envia_error", detail: data };
+  }
+  const first =
+    (Array.isArray(data) && data[0]) ||
+    data?.data?.[0] ||
+    data?.result?.data?.[0] ||
+    data?.result ||
+    data;
+  const shipment_id = first?.shipment_id || first?.id || first?.shipmentId || "";
+  const tracking_number =
+    first?.tracking_number ||
+    first?.trackingNumber ||
+    first?.tracking_number_provider ||
+    first?.tracking ||
+    "";
+  const tracking_url =
+    first?.tracking_url ||
+    first?.trackingUrl ||
+    first?.tracking_link ||
+    first?.label_url ||
+    first?.labelUrl ||
+    first?.label ||
+    "";
+  await updateOrderShipping(orderId, {
+    shipment_id,
+    tracking_number,
+    tracking_url,
+    shipping_status: first?.status || first?.shipment_status || "",
+    notesAppend: tracking_url ? `Envia label/tracking: ${tracking_url}` : "",
+  });
+  return { ok: true, shipment_id, tracking_number, tracking_url };
 }
 
 // Crear una orden en la hoja (similar a ordersRoutes) y devolver order_id
@@ -336,6 +551,13 @@ router.post("/webhook", async (req, res) => {
     const extraNote = `MP payment ${paymentId} status ${info.status} detail ${info.status_detail || ""} shipment ${shipmentId || "n/a"}`;
     if (orderId) {
       await updateOrderStatus(orderId, status, extraNote);
+      if (status === "approved" && ENVIA_API_KEY) {
+        try {
+          await createEnviaShipmentForOrder(orderId);
+        } catch (e) {
+          console.error("No se pudo crear guia Envia:", e?.message || e);
+        }
+      }
     }
     res.sendStatus(200);
   } catch (err) {
@@ -472,7 +694,43 @@ router.get("/tracking/:orderId", async (req, res) => {
 // Consultar cobertura y costo estimado de envíos antes de pagar
 router.post("/shipping-options", async (req, res) => {
   try {
-    return res.json({ ok: true, cost: 0, currency: "ARS", warning: "Envios de Mercado Envios deshabilitados" });
+    if (!ENVIA_API_KEY) {
+      return res.json({
+        ok: false,
+        options: [],
+        warning: "ENVIA_API_KEY no configurado",
+      });
+    }
+    const origin = buildEnviaOrigin();
+    const destination = buildEnviaDestination(req.body || {});
+    const packages = buildEnviaPackages(req.body?.items || []);
+    const payload = { origin, destination, packages };
+    const apiRes = await fetch(`${ENVIA_API_BASE}/rates`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${ENVIA_API_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await apiRes.json().catch(() => ({}));
+    if (!apiRes.ok || !Array.isArray(data)) {
+      console.error("Envia rates error:", data);
+      return res.json({ ok: false, options: [], warning: "No se pudo cotizar envio" });
+    }
+    const options = data
+      .map((rate) => {
+        const cost = Number(rate.totalPrice || rate.total_price || rate.price || rate.amount || 0);
+        return {
+          carrier: rate.carrier || rate.provider || "",
+          service: rate.service || rate.serviceLevelName || "",
+          days: rate.deliveryEstimate || rate.days || rate.estimated_delivery || null,
+          cost,
+          list_cost: cost,
+        };
+      })
+      .filter((opt) => !Number.isNaN(opt.cost) && opt.cost >= 0);
+    return res.json({ ok: true, options, origin, destination });
   } catch (err) {
     console.error("Error en shipping-options:", err);
     res.status(500).json({ error: "No se pudo calcular envio" });
