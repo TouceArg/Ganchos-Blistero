@@ -163,6 +163,13 @@ function buildShipments(body = {}) {
   return null;
 }
 
+const normalizePostalCode = (val = "") => {
+  const clean = String(val || "").match(/\d+/g);
+  return clean ? clean.join("").slice(0, 10) : "";
+};
+
+const normalizeState = (val = "") => String(val || "").trim();
+
 function buildEnviaOrigin() {
   return {
     name: process.env.ENVIA_ORIGIN_NAME || process.env.ENVIA_ORIGIN_COMPANY || "Ganchos Blisteros",
@@ -173,9 +180,9 @@ function buildEnviaOrigin() {
     number: process.env.ENVIA_ORIGIN_NUMBER || "",
     district: process.env.ENVIA_ORIGIN_DISTRICT || "",
     city: process.env.ENVIA_ORIGIN_CITY || "",
-    state: process.env.ENVIA_ORIGIN_STATE || "",
+    state: normalizeState(process.env.ENVIA_ORIGIN_STATE || ""),
     country: process.env.ENVIA_ORIGIN_COUNTRY || "AR",
-    postalCode: process.env.ENVIA_ORIGIN_ZIP || "",
+    postalCode: normalizePostalCode(process.env.ENVIA_ORIGIN_ZIP || ""),
     reference: process.env.ENVIA_ORIGIN_REF || "",
   };
 }
@@ -191,9 +198,9 @@ function buildEnviaDestination(body = {}) {
     number: addr.number || body.numero || "",
     district: addr.district || "",
     city: addr.city || body.city || addr.city || "",
-    state: addr.state || body.state || body.provincia || "",
+    state: normalizeState(addr.state || body.state || body.provincia || ""),
     country: addr.country || body.pais || "AR",
-    postalCode: addr.zip || addr.postalCode || body.cp || "",
+    postalCode: normalizePostalCode(addr.zip || addr.postalCode || body.cp || ""),
     reference: addr.reference || "",
   };
 }
@@ -716,7 +723,7 @@ router.post("/shipping-options", async (req, res) => {
     const data = await apiRes.json().catch(() => ({}));
     if (!apiRes.ok || !Array.isArray(data)) {
       console.error("Envia rates error:", data);
-      return res.json({ ok: false, options: [], warning: "No se pudo cotizar envio" });
+      return res.json({ ok: false, options: [], warning: "No se pudo cotizar envio", detail: data });
     }
     const options = data
       .map((rate) => {
