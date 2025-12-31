@@ -126,72 +126,8 @@ async function fetchMerchantOrderShipment(payment) {
 }
 
 function buildShipments(body = {}) {
-  const addr = body.address || {};
-  const zip = (addr.zip || body.cp || "").toString().trim();
-  const pickup = !!body.pickup;
-  const streetName = String(
-    addr.street ||
-      addr.street_name ||
-      body.street ||
-      body.street_name ||
-      "Consulta"
-  ).trim();
-  const streetNumber =
-    Number(
-      addr.street_number ||
-        addr.number ||
-        addr.num ||
-        body.street_number ||
-        body.number ||
-        1
-    ) || 1;
-  if (pickup) return null;
-  if (!zip || !streetName || !streetNumber) return null;
-  const city = String(addr.city || "").trim();
-  const state = String(addr.state || "").trim();
-  const country = String(addr.country || "").trim();
-  const items = Array.isArray(body.items) ? body.items : [];
-  // Tomamos medidas/peso de cada item si viene; si no, usamos defaults según size
-  let maxL = 0,
-    maxW = 0,
-    maxH = 0,
-    totalWeightGr = 0;
-  items.forEach((i) => {
-    const qty = Number(i.quantity || i.qty || 1);
-    const has12 = String(i.size || "").includes("12");
-    // Ajustamos a dimensiones/peso mínimos que manejan los ganchos reales
-    const defaults = has12 ? { l: 12, w: 1, h: 1, g: 8 } : { l: 8, w: 1, h: 1, g: 5 };
-    const l = Number(i.length_cm || defaults.l) || defaults.l;
-    const w = Number(i.width_cm || defaults.w) || defaults.w;
-    const h = Number(i.height_cm || defaults.h) || defaults.h;
-    const wKg = Number(i.weight_kg) || 0;
-    const wGr = Number(i.weight_g) || (wKg ? wKg * 1000 : defaults.g); // default 20-30g
-    maxL = Math.max(maxL, l);
-    maxW = Math.max(maxW, w);
-    maxH = Math.max(maxH, h);
-    totalWeightGr += wGr * qty;
-  });
-  if (maxL < 8) maxL = 8;
-  if (maxW < 1) maxW = 1;
-  if (maxH < 1) maxH = 1;
-  if (typeof totalWeightGr === "undefined" || totalWeightGr <= 0) totalWeightGr = 5;
-  if (totalWeightGr < 5) totalWeightGr = 5; // mínimo 5g (eran 1-2g reales)
-  const dimensions = `${maxL}x${maxW}x${maxH},${Math.round(totalWeightGr)}`;
-  return {
-    mode: "me2",
-    local_pickup: pickup,
-    receiver_address: {
-      zip_code: String(zip),
-      street_name: streetName || "Sin calle",
-      street_number: streetNumber || 1,
-      floor: addr.floor || "",
-      apartment: addr.apartment || "",
-      city_name: addr.city || city || "",
-      state_name: addr.state || state || "",
-      country_name: addr.country || body.pais || "AR",
-    },
-    dimensions,
-  };
+  // ME2 deshabilitado: no enviamos bloque de envios a MP
+  return null;
 }
 
 // Crear una orden en la hoja (similar a ordersRoutes) y devolver order_id
@@ -536,50 +472,14 @@ router.get("/tracking/:orderId", async (req, res) => {
 // Consultar cobertura y costo estimado de envíos antes de pagar
 router.post("/shipping-options", async (req, res) => {
   try {
-    const price = Number(req.body?.price || req.body?.total || 1) || 1;
-    const shipments = buildShipments({
-      ...req.body,
-      pickup: false,
-      address: {
-        ...(req.body?.address || {}),
-        zip: req.body?.cp || req.body?.address?.zip,
-        street: req.body?.address?.street || req.body?.street || "Consulta",
-        street_number:
-          req.body?.address?.street_number ||
-          req.body?.number ||
-          req.body?.street_number ||
-          1,
-      },
-    });
-    if (!shipments || !shipments.receiver_address?.zip_code) {
-      return res.status(400).json({ error: "Faltan datos de dirección o CP" });
-    }
-    const dims = shipments.dimensions || "9x5x4,20";
-    const zip = shipments.receiver_address.zip_code;
-    const url = `https://api.mercadolibre.com/users/${MP_SELLER_ID}/shipping_options?zip_code=${zip}&dimensions=${encodeURIComponent(
-      dims
-    )}&item_price=${price}`;
-    const mpRes = await fetch(url, {
-      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-    });
-    const data = await mpRes.json();
-    if (!mpRes.ok) {
-      console.error("MP shipping options error:", data);
-      return res
-        .status(400)
-        .json({ error: "No hay cobertura para ese código postal", detail: data });
-    }
-    res.json({
-      ok: true,
-      options: data.options || [],
-      destination: data.destination || data.receiver_address || null,
-    });
+    return res.json({ ok: true, cost: 0, currency: "ARS", warning: "Envios de Mercado Envios deshabilitados" });
   } catch (err) {
-    console.error("Error consultando opciones de envío", err);
-    res.status(500).json({ error: "No se pudieron consultar opciones de envío" });
+    console.error("Error en shipping-options:", err);
+    res.status(500).json({ error: "No se pudo calcular envio" });
   }
 });
 
 module.exports = router;
+
 
 

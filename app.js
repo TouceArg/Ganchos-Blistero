@@ -225,7 +225,7 @@ function renderCatalog() {
           : `<span class="card__label">${p.imageLabel || (p.name?.charAt(0) || "G")}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
-      <h3 class="card__title">${p.name}${p.colors && p.colors.length === 1 && p.colors[0].name ? ` [${p.colors[0].name.toUpperCase()}]` : ""}</h3>
+      <h3 class="card__title">${p.name}</h3>
       <p class="card__desc">${p.description}</p>
       <div class="swatches">
         ${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${c.name}"></span>`).join("")}
@@ -263,7 +263,7 @@ function renderFeatured() {
           : `<span class="card__label">${p.imageLabel || (p.name?.charAt(0) || "G")}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
-      <h3 class="card__title">${p.name}${p.colors && p.colors.length === 1 && p.colors[0].name ? ` [${p.colors[0].name.toUpperCase()}]` : ""}</h3>
+      <h3 class="card__title">${p.name}</h3>
       <p class="card__desc">${p.description}</p>
       <div class="swatches">
         ${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${c.name}"></span>`).join("")}
@@ -300,7 +300,7 @@ function renderCombos() {
           : `<span class="card__label">${p.imageLabel || (p.name?.charAt(0) || "G")}</span>`}
         <span class="card__pill">${p.size}</span>
       </div>
-      <h3 class="card__title">${p.name}${p.colors && p.colors.length === 1 && p.colors[0].name ? ` [${p.colors[0].name.toUpperCase()}]` : ""}</h3>
+      <h3 class="card__title">${p.name}</h3>
       <p class="card__desc">${p.description}</p>
       <div class="swatches">
         ${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${c.name}"></span>`).join("")}
@@ -327,7 +327,7 @@ function addToCart(id) {
   if (!product) return;
   const color = product.colors?.[modalColorIndex] || product.colors?.[0] || { name: "" };
   const cartKey = color.name ? `${id}__${color.name}` : id;
-  const displayName = color.name ? `${product.name} (${color.name.toUpperCase()})` : product.name;
+  const displayName = product.name;
   cart[cartKey] = cart[cartKey]
     ? { ...cart[cartKey], qty: cart[cartKey].qty + 1 }
     : { ...product, id: cartKey, baseId: product.id, colorName: color.name, name: displayName, qty: 1 };

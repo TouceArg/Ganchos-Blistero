@@ -569,7 +569,7 @@ async function saveProduct() {
       price,
       size,
       type,
-      badge,
+      badge: badge || "",
       description,
       images: imageUrl ? [imageUrl] : [],
       colors: [{ name: colorName, hex: colorHex }],

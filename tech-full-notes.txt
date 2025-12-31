@@ -1,0 +1,65 @@
+Ganchos Blisteros – Ficha técnica (stack y flujos)
+=================================================
+
+Infra y hosting
+---------------
+- Frontend estático (Netlify): index.html, catalogo.html, checkout.html, contacto.html, styles.css, app.js, admin.html, admin.js.
+- Backend Node/Express (Railway): server.js monta rutas contactRoutes, ordersRoutes, mpRoutes, products/upload-image, enviaRoutes.
+- Almacenamiento: Supabase (tabla products), Cloudinary (imágenes), Google Sheets (orders). LocalStorage en front para carrito/token.
+- Dominio API prod: https://ganchos-blistero-production.up.railway.app
+
+Variables de entorno (Railway)
+-------------------------------
+- ADMIN_TOKEN
+- SHEET_ID, GS_CLIENT_EMAIL, GS_PRIVATE_KEY (Google Sheets orders)
+- SUPABASE_URL, SUPABASE_KEY, SUPABASE_TABLE
+- CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+- MP_ACCESS_TOKEN (productivo), MP_PUBLIC_KEY opcional, MP_SELLER_ID (264146233)
+- MAIL_USER, MAIL_PASS, DEST_EMAIL (SMTP Gmail 587 STARTTLS)
+- ENVIA_API_KEY, ENVIA_ORIGIN_* (name/street/city/state/zip/country), ENVIA_PKG_* defaults, ENVIA_WEBHOOK_SECRET (para validar webhook Envia)
+
+Backend – Rutas principales
+---------------------------
+- /api/catalogo (products, en productsRoutes, no mostrado aquí pero consumido en front)
+- /api/orders (ordersRoutes): POST crea orden en Sheets, envía correo (cliente + admin) si hay SMTP; GET lista; PATCH/DELETE/label/:id protegidos por ADMIN_TOKEN. Campos extra: tracking_url, tracking_number, shipping_status, shipment_id.
+- /api/pago/create y /api/pago/checkout (mpRoutes): crea preferencia MP con external_reference=order_id; back_urls a Netlify; envía notificación webhook. **Mercado Envíos deshabilitado**: buildShipments retorna null; /shipping-options devuelve costo 0 con warning.
+- /api/pago/webhook (mpRoutes): actualiza estado de la orden (pending/approved/cancelled) consultando payment/merchant_order.
+- /api/pago/check/:order_id: fuerza sincronización de estado (consulta MP).
+- /api/pago/label/:order_id: imprime PDF de ME si hubiera (tracking), pero con ME2 off solo devuelve warning.
+- /api/envia/quote y /api/envia/create (enviaRoutes): cotiza/crea guía Envia con ENVIA_API_KEY; reference=order_id; declared_value total; packages con defaults. Webhook Envia: /api/envia/webhook valida x-api-key (ENVIA_WEBHOOK_SECRET) y actualiza tracking/status en ordersRoutes._updateShippingFromWebhook.
+- /api/contacto (contactRoutes): envía correo de contacto vía SMTP.
+- /api/upload-image: sube a Cloudinary (usa x-admin-token).
+
+Frontend – app.js
+-----------------
+- Carga catálogo desde API_URL (/api/catalogo) con normalización de imágenes (Drive, arrays), colores, etc.; fallback local.
+- Render de cards (catálogo/combos/destacados) con swatches; si hay un solo color, se muestra [COLOR] en el título.
+- Modal de producto muestra color seleccionado y permite agregar al carrito. Carrito en localStorage `gb-cart`; key incluye color (id__color).
+- Checkout: 3 pasos, datos cliente/envío; PAY_URL crea preferencia MP; PAY_STATUS_URL revalida. Con ME deshabilitado, envío se calcula 0 si pickup no está marcado. Loader de pago. Persistencia local en `gb-cart` y `gb-last-order-id`.
+- Botón soporte WhatsApp flotante; minicart con aviso “Pagos encriptados por Mercado Pago”.
+
+Frontend – admin.html/admin.js
+------------------------------
+- Login por token admin (localStorage gb-admin-token).
+- Pedidos: filtros por texto/estado/fecha, paginación, KPI (ventas hoy, pendientes, ticket promedio), gráficos Chart.js. Acciones: cambiar estado, guardar notas, eliminar, imprimir etiqueta interna (PDF ordersRoutes), ver tracking (mpRoutes). Bulk: marcar pendiente/aprobado/cancelado, eliminar seleccionados, export CSV. Selección por checkboxes (selectAll + indeterminate). Toasts.
+- Productos: CRUD con peso/dimensiones, color (Negro/Blanco), publicar/ocultar, duplicar, eliminar. Subida de imagen (Cloudinary) o URL. Lista muestra color/peso/dimensiones/estado publicado.
+
+Integraciones
+-------------
+- Mercado Pago: Checkout Pro, preferencia con external_reference=order_id. Back_urls a Netlify checkout.html con status. Webhook actualiza estado; /check fuerza sincronización. ME2 deshabilitado (no se envía shipments, /shipping-options retorna cost 0).
+- Envia: creación de guía y cotización (si se usa); webhook opcional onShipmentStatusUpdate actualiza tracking/status en la orden. Se valida x-api-key configurado en ENVIA_WEBHOOK_SECRET.
+- SMTP: nodemailer Gmail 587 STARTTLS para pedidos/contacto.
+- PDF interno: /api/orders/label/:id genera A6 con marca “Ganchos Blisteros”, dirección, items, total, notas.
+
+Despliegue
+----------
+- Frontend: Netlify, sin build (HTML/JS/CSS). Asegurar API_BASE/PAY_URL apunten a Railway.
+- Backend: Railway, npm install con pdfkit, dotenv, google-auth/spreadsheet, nodemailer. Start script según package.json. Env vars anteriores cargadas. Healthcheck opcional.
+
+Notas operativas
+----------------
+- Token admin: ADMIN_TOKEN en Railway; se guarda en localStorage del panel.
+- Envíos MP deshabilitados: cualquier llamada a /shipping-options devuelve 0; preferencias se crean sin shipments.
+- Envia: requiere cuenta verificada y ENVIA_API_KEY; configurar webhook en panel Envia con URL `/api/envia/webhook` y header x-api-key=ENVIA_WEBHOOK_SECRET.
+- Tracking: admin “Ver tracking” usa mpRoutes; si no hay tracking MP, muestra link público (warning) o n/a.
+
