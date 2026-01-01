@@ -720,10 +720,21 @@ router.post("/shipping-options", async (req, res) => {
       },
       body: JSON.stringify(payload),
     });
-    const data = await apiRes.json().catch(() => ({}));
+    const rawText = await apiRes.text();
+    let data = {};
+    try {
+      data = JSON.parse(rawText);
+    } catch (_) {
+      data = rawText;
+    }
     if (!apiRes.ok || !Array.isArray(data)) {
-      console.error("Envia rates error:", data);
-      return res.json({ ok: false, options: [], warning: "No se pudo cotizar envio", detail: data });
+      console.error("Envia rates error:", { status: apiRes.status, data });
+      return res.json({
+        ok: false,
+        options: [],
+        warning: "No se pudo cotizar envio",
+        detail: { status: apiRes.status, data },
+      });
     }
     const options = data
       .map((rate) => {
