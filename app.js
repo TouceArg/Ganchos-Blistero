@@ -153,6 +153,7 @@ const brandEl = document.querySelector(".brand");
 const pickupToggle = document.getElementById("pickupToggle");
 let isLoadingCatalog = true;
 let shippingEstimate = null;
+let shippingWarning = "";
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(value);
@@ -400,6 +401,8 @@ function renderCart() {
   subtotalText.textContent = formatCurrency(subtotal);
   const shippingLabel = pickupToggle?.checked
     ? "Retiro en local"
+    : shippingWarning
+    ? shippingWarning
     : shippingEstimate === null
     ? "Calculado en MP"
     : formatCurrency(shipping);
@@ -430,6 +433,8 @@ function renderCheckoutSummary() {
   const shipping = getShipping(subtotal);
   const shippingLabel = pickupToggle?.checked
     ? "Retiro en local"
+    : shippingWarning
+    ? shippingWarning
     : shippingEstimate === null
     ? "Calculado en MP"
     : formatCurrency(shipping);
@@ -607,6 +612,7 @@ async function createPreference(items) {
 }
 
 async function fetchShippingEstimate(subtotal) {
+  shippingWarning = "";
   if (pickupToggle?.checked) {
     shippingEstimate = 0;
     return 0;
@@ -648,7 +654,10 @@ async function fetchShippingEstimate(subtotal) {
     });
     clearTimeout(timer);
     const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data?.options?.length) return null;
+    if (!res.ok || !data?.options?.length) {
+      shippingWarning = data?.warning || "No se pudo cotizar envio";
+      return 0;
+    }
     const costOf = (opt) =>
       Number(
         opt.cost ??
